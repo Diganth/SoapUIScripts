@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2014 Diganth Aswath <diganth2004@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
 package soapUIScripts
 
 import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunContext
@@ -5,11 +22,17 @@ import com.eviware.soapui.model.project.ProjectFactoryRegistry
 import com.eviware.soapui.model.support.ModelSupport
 import com.eviware.soapui.support.UISupport
 import com.eviware.soapui.LogMonitor.*
+import com.eviware.soapui.SoapUI
+import soapUIScripts.date
 
+/**
+ *
+ * @author Diganth Aswath <diganth2004@gmail.com>
+ */
 class Logger {
 	def filepath, temp;
 	def context;
-	def today, todayDate, todayTime, myTestCase, myTestCaseName, myTestSuiteName, dirName;
+	def today, myTestCase, myTestCaseName, myTestSuiteName, dirName;
 	File logDir, logFile;
 
 	//Initialize Log file
@@ -17,16 +40,15 @@ class Logger {
 	{
 		this.filepath = filepath;
 		this.context = context;
-		today = new Date();
-		todayDate = today.getDateString().split('/').join('_');
-		todayTime = today.getTimeString().split(':').join('_');
+                today = new date();
 		myTestCase = context.testCase;
 		myTestCaseName = myTestCase.name;
 		myTestSuiteName = myTestCase.testSuite.name;
-		dirName = filepath + myTestSuiteName + '_' + myTestCaseName + '_' + todayDate + '_' + todayTime + '/';
+		dirName = filepath + myTestSuiteName + '_' + myTestCaseName + '_' + today.todayDate() + '_' + today.todayTime() + '/';
 		logDir = new File(dirName)
 		if(!logDir.exists()) //checking if folder exists
 		{
+                        SoapUI.log "Creating Directory :" + dirName + "as it does not exist"
 			logDir.mkdirs()
 			//log.info "Creating the Directory as it does not exist"
 		}
@@ -34,17 +56,17 @@ class Logger {
 	}
 	def info(String comment)
 	{
-		logFile << "${today}:INFO:${comment}" << "\r\n"
-		captureLogs ("script log");
+		logFile << "${today.today()}:INFO:${comment}" << "\r\n"
+		captureLogs ("soapUI log");
 	}
 	def error(String error)
 	{
-		logFile << "${today}:ERROR:${error}" << "\r\n"
+		logFile << "${today.today()}:ERROR:${error}" << "\r\n"
 		captureLogs ("error log");
 	}
 	def debug(String debug)
 	{
-		logFile << "${today}:DEBUG:${debug}" <<"\r\n"
+		logFile << "${today.today()}:DEBUG:${debug}" <<"\r\n"
 		captureLogs ("http log");
 	}
 	def captureLogs (String logType){
