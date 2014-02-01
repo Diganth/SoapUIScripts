@@ -31,7 +31,7 @@ import soapUIScripts.*
  */
 class captureURL {
 	
-    def util, log, context;
+    def util, log, context, modded_url;
     int works = 0;
     captureURL(utility util, logger log){
         SoapUI.log("In constructor of captureURL");
