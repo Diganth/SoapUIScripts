@@ -40,29 +40,37 @@ class utility {
         today = new Date();
             
     }
+    //Returns Today's date and time
     def today(){
         return today.toString();
     }
+    //Returns Today's Date in a readable format
     def todayDate(){
         //today = new Date();
         return today.getDateString().split('/').join('_');
     }
+    //Returns Today's Time in a readable format
     def todayTime(){
         //today = new Date();
         return today.getTimeString().split(':').join('_');
     }
+    //Returns current testcase
     def testCase(){
         return context.testCase;
     }
+    //Returns TestSuite to which the testcase belongs to.
     def testSuite(){
         return context.testCase.testSuite;
     }
+    //Returns all the teststeps in the Test Suite
     def testStepsList(){
         return context.testCase.getTestStepList();
     }
+    //Returns the project in which the Test Suite is located in
     def project(){
         return context.testCase.testSuite.project;
     }
+    //Returns the Directory name where results and logs of the current testcase are located.
     def dirName(){
         return filepath + testSuite().name + '_' + testCase().name + '_' + todayDate() + '_' + todayTime() + '/';
     }

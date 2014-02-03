@@ -71,6 +71,7 @@ class logger {
         logFile << "${util.today()}:DEBUG:${debug}" <<"\r\n"
         //captureLogs ("http log");
     }
+    //Captures SOAPUI logs.
     def captureLogs (String logType){
         def logArea = com.eviware.soapui.SoapUI.logMonitor.getLogArea( logType );
         if( logArea !=null )

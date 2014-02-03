@@ -36,14 +36,32 @@ class starter {
     starter(def context, String filepath){
         this.context = context
         this.filepath = filepath
-        SoapUI.log("Creating class for util");
+        //SoapUI.log("Creating class for util");
         util = new utility(context, filepath); 
-        SoapUI.log("Creating class for logger");
+        //SoapUI.log("Creating class for logger");
         logger = new logger(util);
-        SoapUI.log("Creating class for captureURL");
+        //SoapUI.log("Creating class for captureURL");
         captureURL = new captureURL (util, logger)
-        logger.info("testing one two three");
-        captureURL.printURL(0);
+        testCaseIterator();
+    }
+    def testCaseIterator(){
+        def testSteps = util.testStepsList();
+        testSteps.each {
+            // Checking if TestStep is of WSDLTestRequest type
+            if (it instanceof com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep){
+                // Reading Raw request to extract Namespace to use.
+                def rawRequest = it.getProperty("Request").getValue()
+                if (rawRequest.contains("CreateIndicium")){
+                    String[] nameSpaceURL= rawRequest.findAll('https?://[^\\s<>"]+|www\\.[^\\s<>"]+')
+                    // Reading response content into an object
+                    def url = context.expand( '${'+it.name+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:URL[1]}')
+                    captureURL.printURL(url, it.name);
+                }
+                else {
+                    log.error("Unable to find Create Indicium in request.");
+                }
+            }
+        }
     }
 }
 
