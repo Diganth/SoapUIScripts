@@ -31,7 +31,7 @@ import soapUIScripts.*
  * @author Diganth Aswath <diganth2004@gmail.com>
  */
 class starter {
-    def context, filepath, util, logger;
+    def context, filepath, util, log;
     def captureURL;
     starter(def context, String filepath){
         this.context = context
@@ -39,9 +39,9 @@ class starter {
         //SoapUI.log("Creating class for util");
         util = new utility(context, filepath); 
         //SoapUI.log("Creating class for logger");
-        logger = new logger(util);
+        log = new logger(util);
         //SoapUI.log("Creating class for captureURL");
-        captureURL = new captureURL (util, logger)
+        captureURL = new captureURL (util, log)
         testCaseIterator();
     }
     def testCaseIterator(){
@@ -56,6 +56,10 @@ class starter {
                     // Reading response content into an object
                     def url = context.expand( '${'+it.name+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:URL[1]}')
                     captureURL.printURL(url, it.name);
+                    def stampsTxID = context.expand ('${'+it.name+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:StampsTxID[1]}')
+                    log.info(it.name + "StampsTxTD : " + stampsTxID)
+                    def tracking = context.expand ('${'+it.name+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:TrackingNumber[1]}')
+                    log.info(it.name + "Tracking Number : " +tracking)
                 }
                 else {
                     log.error("Unable to find Create Indicium in request.");
