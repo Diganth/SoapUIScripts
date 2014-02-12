@@ -19,6 +19,7 @@
 package soapUIScripts
 
 import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep
+import com.eviware.soapui.impl.wsdl.teststeps.*
 import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunContext
 import com.eviware.soapui.model.project.ProjectFactoryRegistry
 import com.eviware.soapui.model.support.ModelSupport
@@ -31,18 +32,16 @@ import soapUIScripts.*
  * @author Diganth Aswath <diganth2004@gmail.com>
  */
 class starter {
-    def context, filepath, util, log;
+    def context, filepath, util, log, testRunner;
     def captureURL;
-    starter(def context, String filepath){
+    starter(def context, def testRunner, String filepath){
         this.context = context
         this.filepath = filepath
-        //SoapUI.log("Creating class for util");
+        this.testRunner = testRunner
         util = new utility(context, filepath); 
-        //SoapUI.log("Creating class for logger");
         log = new logger(util);
-        //SoapUI.log("Creating class for captureURL");
         captureURL = new captureURL (util, log)
-        testCaseIterator();
+        //testCaseIterator();
     }
     def testCaseIterator(){
         def testSteps = util.testStepsList();
@@ -51,21 +50,76 @@ class starter {
             if (it instanceof com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep){
                 // Reading Raw request to extract Namespace to use.
                 def rawRequest = it.getProperty("Request").getValue()
+                String[] nameSpaceURL= rawRequest.findAll('https?://[^\\s<>"]+|www\\.[^\\s<>"]+')
                 if (rawRequest.contains("CreateIndicium")){
-                    String[] nameSpaceURL= rawRequest.findAll('https?://[^\\s<>"]+|www\\.[^\\s<>"]+')
+                    createIndicium(it.name,nameSpaceURL[1])
                     // Reading response content into an object
-                    def url = context.expand( '${'+it.name+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:URL[1]}')
+                    /*def url = context.expand( '${'+it.name+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:URL[1]}')
                     captureURL.printURL(url, it.name);
                     def stampsTxID = context.expand ('${'+it.name+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:StampsTxID[1]}')
                     log.info(it.name + "StampsTxTD : " + stampsTxID)
                     def tracking = context.expand ('${'+it.name+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:TrackingNumber[1]}')
-                    log.info(it.name + "Tracking Number : " +tracking)
+                    log.info(it.name + "Tracking Number : " +tracking)*/
+                }
+                else if (rawRequest.contains("RegisterAccount")){
+                    registration(it.name, nameSpaceURL[1])
                 }
                 else {
-                    log.error("Unable to find Create Indicium in request.");
+                    log.error("Unable to find any valid acceptable types in request.");
                 }
             }
         }
+    }
+    def createIndicium(def testStepName, String nameSpace){
+        def url = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:URL[1]}')
+        def stampsTxID = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:StampsTxID[1]}')
+        def tracking = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:TrackingNumber[1]}')
+        captureURL.printURL(url, testStepName);
+        log.info(testStepName + "StampsTxTD : " + stampsTxID)
+        log.info(testStepName + "Tracking Number : " +tracking)
+    }
+    def registration(def testStepName, String nameSpace){
+        def userName = context.expand('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:RegisterAccount[1]/ns1:UserName[1]}')
+        def userID = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:RegisterAccountResponse[1]/ns1:UserId[1]}')
+        def result = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:RegisterAccountResponse[1]/ns1:RegistrationStatus[1]}')
+        if (result == "Fail"){
+            log.error ("FAIL :: Coud not create user : " + userName)
+        }
+        else if (result == "Pending"){
+            log.info ("PENDING :: User " + userName)
+        }
+        else if (result == "Success"){
+            log.info ("SUCCESS :: User " + userName + " and User ID "+ userID)
+        }
+    }
+    def DataSource(def propertyName){
+        def counter, next, size;
+        def propTestStep = util.propertyTestStep(propertyName);
+        counter = propTestStep.getPropertyValue("Count").toString()
+        counter = counter.toInteger()
+        size = propTestStep.getPropertValue("Total").toString()
+        size = size.toInteger()
+        next = (counter > size-2? 0: counter+1)
+        propTestStep.setPropertyValue("Count", next.toString())
+        next++;
+        log.info ("Counter Value : " +counter)
+        propTestStep.setPropertyValue("Next", next.toString())
+        log.info ("Next Value : " +next)
+        if (counter == size-1){
+            propTestStep.setPropertyValue("StopLoop", "T")
+            log.info ("Setting the stoploop property now ...")
+        }
+        else if (counter==0){
+            def runner = new com.eviware.soapui.impl.wsdl.testcase.WsdlTestCaseRunner(testRunner.testCase, null)
+            log.info ("Starting the DataLoop now ...")
+            propTestStep.setPropertyValue("StopLoop", "F")
+        }
+        else{
+            propTestStep.setPropertyValue("StopLoop", "F")
+        }
+    }
+    def DataLoop(def propertyName){
+        def propTestStep = util.propertyTestStep(propertyName);
     }
 }
 

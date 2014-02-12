@@ -74,5 +74,10 @@ class utility {
     def dirName(){
         return filepath + testSuite().name + '_' + testCase().name + '_' + todayDate() + '_' + todayTime() + '/';
     }
+    //Returns the testStep with specified Property Name
+    def propertyTestStep(def propName){
+        return context.testCase.getTestStepByName(propName)
+    }
+    
 }
 

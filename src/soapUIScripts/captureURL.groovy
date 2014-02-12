@@ -69,6 +69,7 @@ class captureURL {
         } 
         else{
             log.info ("Used URL as is.")
+            out << input
         }
         out.close()
     }

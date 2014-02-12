@@ -17,5 +17,5 @@ if (endLoop.toString() == "T" || endLoop.toString()=="True" || endLoop.toString(
 }
 else
 {
- testRunner.gotoStepByName("Groovy Script - DataSource") //setStartStep
+ testRunner.gotoStepByName("DataSource") //setStartStep
 }
