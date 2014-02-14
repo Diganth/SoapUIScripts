@@ -32,16 +32,15 @@ import soapUIScripts.*
  * @author Diganth Aswath <diganth2004@gmail.com>
  */
 class starter {
-    def context, filepath, util, log, testRunner;
+    def context, util, log, testRunner;
     def captureURL;
-    starter(def context, def testRunner, String filepath){
+    starter(def context, def testRunner, def propertyName){
         this.context = context
-        this.filepath = filepath
         this.testRunner = testRunner
-        util = new utility(context, filepath); 
+        util = new utility(context, propertyName); 
         log = new logger(util);
+        log.createLogFile();
         captureURL = new captureURL (util, log)
-        //testCaseIterator();
     }
     def testCaseIterator(){
         def testSteps = util.testStepsList();
@@ -53,13 +52,6 @@ class starter {
                 String[] nameSpaceURL= rawRequest.findAll('https?://[^\\s<>"]+|www\\.[^\\s<>"]+')
                 if (rawRequest.contains("CreateIndicium")){
                     createIndicium(it.name,nameSpaceURL[1])
-                    // Reading response content into an object
-                    /*def url = context.expand( '${'+it.name+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:URL[1]}')
-                    captureURL.printURL(url, it.name);
-                    def stampsTxID = context.expand ('${'+it.name+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:StampsTxID[1]}')
-                    log.info(it.name + "StampsTxTD : " + stampsTxID)
-                    def tracking = context.expand ('${'+it.name+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:TrackingNumber[1]}')
-                    log.info(it.name + "Tracking Number : " +tracking)*/
                 }
                 else if (rawRequest.contains("RegisterAccount")){
                     registration(it.name, nameSpaceURL[1])
@@ -71,17 +63,17 @@ class starter {
         }
     }
     def createIndicium(def testStepName, String nameSpace){
-        def url = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:URL[1]}')
-        def stampsTxID = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:StampsTxID[1]}')
-        def tracking = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:CreateIndiciumResponse[1]/ns1:TrackingNumber[1]}')
+        def url = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:URL[1]}')
+        def stampsTxID = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:StampsTxID[1]}')
+        def tracking = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:TrackingNumber[1]}')
         captureURL.printURL(url, testStepName);
         log.info(testStepName + "StampsTxTD : " + stampsTxID)
         log.info(testStepName + "Tracking Number : " +tracking)
     }
     def registration(def testStepName, String nameSpace){
-        def userName = context.expand('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:RegisterAccount[1]/ns1:UserName[1]}')
-        def userID = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:RegisterAccountResponse[1]/ns1:UserId[1]}')
-        def result = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpaceURL[1]+'\';//ns1:RegisterAccountResponse[1]/ns1:RegistrationStatus[1]}')
+        def userName = context.expand('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccount[1]/ns1:UserName[1]}')
+        def userID = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccountResponse[1]/ns1:UserId[1]}')
+        def result = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccountResponse[1]/ns1:RegistrationStatus[1]}')
         if (result == "Fail"){
             log.error ("FAIL :: Coud not create user : " + userName)
         }
@@ -92,34 +84,42 @@ class starter {
             log.info ("SUCCESS :: User " + userName + " and User ID "+ userID)
         }
     }
-    def DataSource(def propertyName){
+    def dataSource(){
         def counter, next, size;
-        def propTestStep = util.propertyTestStep(propertyName);
-        counter = propTestStep.getPropertyValue("Count").toString()
+        counter = util.readProperty("Count").toString()
         counter = counter.toInteger()
-        size = propTestStep.getPropertValue("Total").toString()
+        size = util.readProperty("Total").toString()
         size = size.toInteger()
         next = (counter > size-2? 0: counter+1)
-        propTestStep.setPropertyValue("Count", next.toString())
+        util.writeProperty("Count", next.toString())
         next++;
         log.info ("Counter Value : " +counter)
-        propTestStep.setPropertyValue("Next", next.toString())
+        util.writeProperty("Next", next.toString())
         log.info ("Next Value : " +next)
         if (counter == size-1){
-            propTestStep.setPropertyValue("StopLoop", "T")
+            util.writeProperty("StopLoop", "T")
             log.info ("Setting the stoploop property now ...")
         }
         else if (counter==0){
             def runner = new com.eviware.soapui.impl.wsdl.testcase.WsdlTestCaseRunner(testRunner.testCase, null)
             log.info ("Starting the DataLoop now ...")
-            propTestStep.setPropertyValue("StopLoop", "F")
+            util.writeProperty("StopLoop", "F")
         }
         else{
-            propTestStep.setPropertyValue("StopLoop", "F")
+            util.writeProperty("StopLoop", "F")
         }
     }
-    def DataLoop(def propertyName){
-        def propTestStep = util.propertyTestStep(propertyName);
+    def dataLoop(){
+        testCaseIterator();
+        def endLoop = util.readProperty("StopLoop").toString()
+        if (endLoop.toString()=="T" || endLoop.toString()=="True" || endLoop.toString()=="true"){
+            log.info ("Exiting the Data Source Looper")
+            util.writeProperty("LogFileLocation", "0")
+            assert true
+        }
+        else{
+            testRunner.gotoStepByName("DataSource") // Starting TestStep
+        }
     }
 }
 

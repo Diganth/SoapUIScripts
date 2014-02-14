@@ -38,23 +38,24 @@ class logger {
     //Initialize Log file
     logger (utility util)
     {
-        //this.filepath = filepath;
-        //this.context = context;
-        //util = new utility();
-        //myTestCase = util.testCase()
-        //myTestCaseName = myTestCase.name;
-        //myTestSuiteName = myTestCase.testSuite.name;
-        //dirName = filepath + myTestSuiteName + '_' + myTestCaseName + '_' + util.todayDate() + '_' + util.todayTime() + '/';
         this.util = util;
+    }
+    def createLogFile(){
         dirName = util.dirName();
         logDir = new File(dirName)
-        if(!logDir.exists()) //checking if folder exists
+        if(!logDir.isDirectory() && util.readProperty("LogFileLocation").toString()== "0") //checking if folder exists
         {
             SoapUI.log "Creating Directory :" + dirName + "as it does not exist"
             logDir.mkdirs()
-            //log.info "Creating the Directory as it does not exist"
+            logFile = new File( logDir, "log.log")
+            util.writeProperty("LogFileLocation", dirName)
         }
-        logFile = new File( logDir, "log.log")
+        else {
+            SoapUI.log "Log Directory and File already exist at :" + dirName
+            logDir = new File(util.readProperty("LogFileLocation"))
+            logFile = new File( logDir, "log.log")
+            
+        }
     }
     def info(String comment)
     {

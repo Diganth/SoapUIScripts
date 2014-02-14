@@ -31,15 +31,15 @@ import soapUIScripts.*
  * @author Diganth Aswath <diganth2004@gmail.com>
  */
 class utility {
-    def today, todayDate, todayTime;
-    def context, filepath;
+    def today, todayDate, todayTime, propName;
+    def context;
     
-    utility(def context, String filepath){
+    utility(def context, String propName){
         this.context = context;
-        this.filepath = filepath;
-        today = new Date();
-            
+        this.propName = propName;
+        today = new Date();  
     }
+  
     //Returns Today's date and time
     def today(){
         return today.toString();
@@ -72,12 +72,19 @@ class utility {
     }
     //Returns the Directory name where results and logs of the current testcase are located.
     def dirName(){
-        return filepath + testSuite().name + '_' + testCase().name + '_' + todayDate() + '_' + todayTime() + '/';
+        return this.readProperty("FilePath") + testSuite().name + '_' + testCase().name + '_' + todayDate() + '_' + todayTime() + '/';
     }
     //Returns the testStep with specified Property Name
-    def propertyTestStep(def propName){
-        return context.testCase.getTestStepByName(propName)
+    def propertyTestStep(){
+        return context.testCase.getTestStepByName(propName);
     }
-    
+    //Reads from Property file
+    def readProperty(def property){
+        return this.propertyTestStep().getPropertyValue(property);
+    }
+    //Writes to Property file
+    def writeProperty(def property, def value){
+        this.propertyTestStep().setPropertyValue(property, value);
+    }
 }
 
