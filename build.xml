@@ -72,7 +72,7 @@
     -->
     <target name="-pre-init">
    <property name="project.name" value="SoapUIScripts" />
-   <property name="version.num" value="0.1" />
+   <property name="version.num" value="0.2" />
    <property name="user.name" value="Diganth Aswath"/>
    <tstamp>
       <format property="NOW" pattern="yyyy-MM-dd HH:mm:ss z" />
