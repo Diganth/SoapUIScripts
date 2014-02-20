@@ -3,8 +3,8 @@ Ant-Version: Apache Ant 1.9.1
 Created-By: 1.7.0_45-b18 (Oracle Corporation)
 Built-By: daswath
 Bundle-Name: SoapUIScripts
-Bundle-Version: 0.1
-Bundle-Date: 2014-02-14 15:52:36 PST
+Bundle-Version: 0.2
+Bundle-Date: 2014-02-20 14:30:07 PST
 Implementation-Title: SoapUIScripts
-Implementation-Version: 0.1
+Implementation-Version: 0.2
 

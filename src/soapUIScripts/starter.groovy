@@ -86,15 +86,15 @@ class starter {
     }
     def dataSource(){
         def counter, next, size;
-        counter = util.readProperty("Count").toString()
+        counter = util.readProperty("LoopCount").toString()
         counter = counter.toInteger()
-        size = util.readProperty("Total").toString()
+        size = util.readProperty("LoopTotal").toString()
         size = size.toInteger()
         next = (counter > size-2? 0: counter+1)
-        util.writeProperty("Count", next.toString())
+        util.writeProperty("LoopCount", next.toString())
         next++;
         log.info ("Counter Value : " +counter)
-        util.writeProperty("Next", next.toString())
+        util.writeProperty("LoopNextValue", next.toString())
         log.info ("Next Value : " +next)
         if (counter == size-1){
             util.writeProperty("StopLoop", "T")

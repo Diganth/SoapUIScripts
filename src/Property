@@ -1,9 +1,9 @@
-FilePath=C:/Users/daswath/Copy/QA_Documents/SoapUI Projects/Result/
+ResultFilePath=C:/Users/daswath/Copy/QA_Documents/SoapUI Projects/Result/
 LogFileLocation=0
-Count=0
-Next=1
-Total=2
+LoopCount=0
+LoopNextValue=1
+LoopTotal=2
 StopLoop=T
-user=dastag
-pass=password0
+username=dastag
+password=password0
 fullname=STAGING User

@@ -72,7 +72,7 @@ class utility {
     }
     //Returns the Directory name where results and logs of the current testcase are located.
     def dirName(){
-        return this.readProperty("FilePath") + testSuite().name + '_' + testCase().name + '_' + todayDate() + '_' + todayTime() + '/';
+        return this.readProperty("ResultFilePath") + testSuite().name + '_' + testCase().name + '_' + todayDate() + '_' + todayTime() + '/';
     }
     //Returns the testStep with specified Property Name
     def propertyTestStep(){
