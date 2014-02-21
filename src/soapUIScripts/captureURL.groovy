@@ -34,7 +34,7 @@ class captureURL {
 	
     def util, log, url, modded_url, testStepName;
     captureURL(utility util, logger log){
-        SoapUI.log("In constructor of captureURL");
+        //SoapUI.log("In constructor of captureURL");
         this.util = util;
         this.log  = log;
     }

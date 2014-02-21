@@ -30,16 +30,17 @@ import soapUIScripts.*
 /**
  *
  * @author Diganth Aswath <diganth2004@gmail.com>
+ * @description This class contains code that parses executed requests and 
+ *              extracts data, logs them, prints URLs. if adding new functionality,
+ *              only this class needs to be changed.
  */
-class starter {
-    def context, util, log, testRunner;
+class evalRequests {
+    def context, util, log;
     def captureURL;
-    starter(def context, def testRunner, def propertyName){
+    evalRequests(def util, def context, def log){
+        this.util = util
         this.context = context
-        this.testRunner = testRunner
-        util = new utility(context, propertyName); 
-        log = new logger(util);
-        log.createLogFile();
+        this.log = log
         captureURL = new captureURL (util, log)
     }
     def testCaseIterator(){
@@ -84,42 +85,6 @@ class starter {
             log.info ("SUCCESS :: User " + userName + " and User ID "+ userID)
         }
     }
-    def dataSource(){
-        def counter, next, size;
-        counter = util.readProperty("LoopCount").toString()
-        counter = counter.toInteger()
-        size = util.readProperty("LoopTotal").toString()
-        size = size.toInteger()
-        next = (counter > size-2? 0: counter+1)
-        util.writeProperty("LoopCount", next.toString())
-        next++;
-        log.info ("Counter Value : " +counter)
-        util.writeProperty("LoopNextValue", next.toString())
-        log.info ("Next Value : " +next)
-        if (counter == size-1){
-            util.writeProperty("StopLoop", "T")
-            log.info ("Setting the stoploop property now ...")
-        }
-        else if (counter==0){
-            def runner = new com.eviware.soapui.impl.wsdl.testcase.WsdlTestCaseRunner(testRunner.testCase, null)
-            log.info ("Starting the DataLoop now ...")
-            util.writeProperty("StopLoop", "F")
-        }
-        else{
-            util.writeProperty("StopLoop", "F")
-        }
-    }
-    def dataLoop(){
-        testCaseIterator();
-        def endLoop = util.readProperty("StopLoop").toString()
-        if (endLoop.toString()=="T" || endLoop.toString()=="True" || endLoop.toString()=="true"){
-            log.info ("Exiting the Data Source Looper")
-            util.writeProperty("LogFileLocation", "0")
-            assert true
-        }
-        else{
-            testRunner.gotoStepByName("DataSource") // Starting TestStep
-        }
-    }
+    
 }
 

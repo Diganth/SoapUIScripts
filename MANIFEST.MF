@@ -4,7 +4,7 @@ Created-By: 1.7.0_45-b18 (Oracle Corporation)
 Built-By: daswath
 Bundle-Name: SoapUIScripts
 Bundle-Version: 0.2
-Bundle-Date: 2014-02-20 14:30:07 PST
+Bundle-Date: 2014-02-20 16:25:45 PST
 Implementation-Title: SoapUIScripts
 Implementation-Version: 0.2
 
