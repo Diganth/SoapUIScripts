@@ -83,8 +83,10 @@ class utility {
     }
     //Reads from Property file
     def readProperty(def property){
-        if (this.propertyTestStep().getPropertyValue(property) == null)
+        if (this.propertyTestStep().getPropertyValue(property) == null){
             SoapUI.log "Check Property Name. Supplied property name does not match " + property;
+            return 0;
+        }
         else
             return this.propertyTestStep().getPropertyValue(property);
     }

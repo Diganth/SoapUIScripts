@@ -27,11 +27,11 @@ package soapUIScripts
  *              of times the loop executes is determined by values "LoopCount" and 
  *              "LoopTotal" which are obtained from the property file.
  */
-class looper {
+class startExec {
         
     def context, util, log, testRunner, evaluator;
     
-    looper(def context, def testRunner, def propertyName){
+    startExec(def context, def testRunner, def propertyName){
         this.context = context
         this.testRunner = testRunner
         util = new utility(context, propertyName); 
@@ -71,12 +71,18 @@ class looper {
         def endLoop = util.readProperty("StopLoop").toString()
         if (endLoop.toString()=="T" || endLoop.toString()=="True" || endLoop.toString()=="true"){
             log.info ("Exiting the Data Source Looper")
-            util.writeProperty("LogFileLocation", "0")
+            util.writeProperty("LogFileLocation", "0") //Erasing log file location in the property file.
             assert true
         }
         else{
-            testRunner.gotoStepByName("DataSource") // Starting TestStep
+            testRunner.gotoStepByName("DataSource") // Starting TestStep -- Note that "DataSource" needs to be name of starting groovy script in SOAPUI.
         }
     }
+    
+    def executeOnce(){
+        evaluator.testCaseIterator();
+        util.writeProperty("LogFileLocation","0") //Erasing log file location in the property file.
+    }
+
 }
 

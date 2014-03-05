@@ -44,7 +44,7 @@ class captureURL {
 	
     //Function to create file with TestStep name depending on imagetype
     def file_create (imageType, url){
-        def fileName = util.dirName()+testStepName+'_'+imageType
+        def fileName = util.readProperty("LogFileLocation")+testStepName+util.readProperty("LoopCount")+imageType
         // Write output to file created
         writetoFile (fileName, url)
     }

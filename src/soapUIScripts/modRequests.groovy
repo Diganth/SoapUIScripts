@@ -30,19 +30,15 @@ import soapUIScripts.*
 /**
  *
  * @author Diganth Aswath <diganth2004@gmail.com>
- * @description This class contains code that parses executed requests and 
- *              extracts data, logs them, prints URLs. if adding new functionality,
- *              only this class needs to be changed.
  */
-class evalRequests {
+class modRequests {
     def context, util, log;
-    def captureURL;
-    evalRequests(def util, def context, def log){
+    modRequests(def util, def context, def log){
         this.util = util
         this.context = context
         this.log = log
-        captureURL = new captureURL (util, log)
     }
+        
     def testCaseIterator(){
         def testSteps = util.testStepsList();
         testSteps.each {
@@ -69,33 +65,9 @@ class evalRequests {
             }
         }
     }
+    
     def createIndicium(def testStepName, String nameSpace){
-        def url = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:URL[1]}')
-        def stampsTxID = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:StampsTxID[1]}')
-        def tracking = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:TrackingNumber[1]}')
-        captureURL.printURL(url, testStepName);
-        log.info(testStepName + "StampsTxTD : " + stampsTxID)
-        log.info(testStepName + "Tracking Number : " +tracking)
-    }
-    def registration(def testStepName, String nameSpace){
-        def userName = context.expand('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccount[1]/ns1:UserName[1]}')
-        def userID = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccountResponse[1]/ns1:UserId[1]}')
-        def result = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccountResponse[1]/ns1:RegistrationStatus[1]}')
-        if (result == "Fail"){
-            log.error ("FAIL :: Coud not create user : " + userName)
-        }
-        else if (result == "Pending"){
-            log.info ("PENDING :: User " + userName)
-        }
-        else if (result == "Success"){
-            log.info ("SUCCESS :: User " + userName + " and User ID "+ userID)
-        }
-    }
-    def purchasePostage(def testStepName, String namespace){
-    }
-    def getAccountInfo(def testStepName, String namespace){
         
     }
-    
 }
 
