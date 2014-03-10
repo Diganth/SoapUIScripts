@@ -57,11 +57,11 @@ class evalRequests {
                 else if (rawRequest.contains("RegisterAccount")){
                     registration(it.name, nameSpaceURL[1])
                 }
-                else if (rawRquest.contains("PurchasePostage")){
-                    
+                else if (rawRequest.contains("PurchasePostage")){
+                    purchasePostage(it.name,nameSpaceURL[1])
                 }
                 else if (rawRequest.contains("GetAccountInfo")){
-                    
+                    getAccountInfo(it.name,nameSpaceURL[1])
                 }
                 else {
                     log.error("Unable to find any valid acceptable types in request.");
@@ -94,7 +94,19 @@ class evalRequests {
     def purchasePostage(def testStepName, String namespace){
     }
     def getAccountInfo(def testStepName, String namespace){
-        
+        def custID = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:CustomerID[1]}')
+        def meterno = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:MeterNumber[1]}')
+        def userID = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:UserID[1]}')
+        def availablePostage = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:PostageBalance[1]/ns1:AvailablePostage[1]}')
+        def controlTotal = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:PostageBalance[1]/ns1:ControlTotal[1]}')
+        def maxPostageBal = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:MaxPostageBalance[1]}')
+        log.info ("INFO :: PurchasePostage request details")
+        log.info ("INFO :: Customer ID == " + custID)
+        log.info ("INFO :: Meter Number == " + meterno)
+        log.info ("INFO :: User ID == " + userID)
+        log.info ("INFO :: Available Postage  == " + availablePostage)
+        log.info ("INFO :: Control Total == " + controlTotal)
+        log.info ("INFO :: Max. Postage Balance == " + maxPostageBal)
     }
     
 }
