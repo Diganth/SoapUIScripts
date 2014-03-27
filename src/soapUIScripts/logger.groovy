@@ -59,17 +59,17 @@ class logger {
     }
     def info(String comment)
     {
-        logFile << "${util.today()}:INFO:${comment}" << "\r\n"
+        logFile << "${util.today()}::INFO::${comment}" << "\r\n"
         //captureLogs ("soapUI log");
     }
     def error(String error)
     {
-        logFile << "${util.today()}:ERROR:${error}" << "\r\n"
+        logFile << "${util.today()}::ERROR::${error}" << "\r\n"
         //captureLogs ("error log");
     }
     def debug(String debug)
     {
-        logFile << "${util.today()}:DEBUG:${debug}" <<"\r\n"
+        logFile << "${util.today()}::DEBUG::${debug}" <<"\r\n"
         //captureLogs ("http log");
     }
     //Captures SOAPUI logs.

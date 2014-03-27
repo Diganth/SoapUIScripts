@@ -94,5 +94,18 @@ class utility {
     def writeProperty(def property, def value){
         this.propertyTestStep().setPropertyValue(property, value);
     }
+    //Reads from TestSuite property
+    def readTestSuiteProperty(def property){
+        if (this.testSuite().getPropertyValue(property) == null){
+            SoapUI.log "Check TestSuite Property Name. Supplied property name does not match " + property;
+            return 0;
+        }
+        else
+            return this.testSuite().getPropertyValue(property);
+    }
+    //Write to TestSuite property
+    def writeTestSuiteProperty(def property, def value){
+        this.testSuite().setPropertyValue(property, value);
+    }
 }
 

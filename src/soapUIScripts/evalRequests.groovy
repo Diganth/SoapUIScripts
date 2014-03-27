@@ -63,6 +63,9 @@ class evalRequests {
                 else if (rawRequest.contains("GetAccountInfo")){
                     getAccountInfo(it.name,nameSpaceURL[1])
                 }
+                else if (rawRequest.contains("CreateUnfundedIndicium")){
+                    createUnfundedIndicium(it.name,nameSpaceURL[1])
+                }
                 else {
                     log.error("Unable to find any valid acceptable types in request.");
                 }
@@ -74,39 +77,63 @@ class evalRequests {
         def stampsTxID = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:StampsTxID[1]}')
         def tracking = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:TrackingNumber[1]}')
         captureURL.printURL(url, testStepName);
-        log.info(testStepName + "StampsTxTD : " + stampsTxID)
-        log.info(testStepName + "Tracking Number : " +tracking)
+        log.info(testStepName + ":: StampsTxTD : " + stampsTxID)
+        log.info(testStepName + ":: Tracking Number : " +tracking)
     }
     def registration(def testStepName, String nameSpace){
         def userName = context.expand('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccount[1]/ns1:UserName[1]}')
         def userID = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccountResponse[1]/ns1:UserId[1]}')
         def result = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccountResponse[1]/ns1:RegistrationStatus[1]}')
         if (result == "Fail"){
-            log.error ("FAIL :: Coud not create user : " + userName)
+            log.error ("Registration FAIL :: Coud not create user : " + userName)
         }
         else if (result == "Pending"){
-            log.info ("PENDING :: User " + userName)
+            log.info ("Registration PENDING :: User " + userName)
         }
         else if (result == "Success"){
-            log.info ("SUCCESS :: User " + userName + " and User ID "+ userID)
+            log.info ("Registration SUCCESS :: User " + userName + " and User ID "+ userID)
         }
     }
-    def purchasePostage(def testStepName, String namespace){
+    def purchasePostage(def testStepName, String nameSpace){
+        def purchaseStatus = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:PurchaseStatus[1]}')
+        def transactionID = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:TransactionID[1]}')
+        def availablePostage = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:PostageBalance[1]/ns1:AvailablePostage[1]}')
+        def controlTotal = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:PostageBalance[1]/ns1:ControlTotal[1]}')
+        def rejectionReason = context..expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:RejectionReason[1]}')
+        if (purchaseStatus == "Success"){
+            log.info ("Purchase Postage SUCCESS :: Transaction ID " + transactionID + " :: Available Postage " + availablePostage + ":: Control Total " + controlTotal)
+        }
+        else if (purchaseStatus == "Pending"){
+            log.info ("Purchase Postage PENDING :: Transaction ID " + transactionID + " :: Available Postage " + availablePostage + ":: Control Total " + controlTotal)
+        }
+        else{
+            log.error ("Purchase Postage REJECTED :: Transaction ID " + transactionID + " :: Available Postage " + availablePostage + ":: Control Total " + controlTotal)
+        }
     }
-    def getAccountInfo(def testStepName, String namespace){
+        
+    def getAccountInfo(def testStepName, String nameSpace){
         def custID = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:CustomerID[1]}')
         def meterno = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:MeterNumber[1]}')
         def userID = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:UserID[1]}')
         def availablePostage = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:PostageBalance[1]/ns1:AvailablePostage[1]}')
         def controlTotal = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:PostageBalance[1]/ns1:ControlTotal[1]}')
         def maxPostageBal = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:MaxPostageBalance[1]}')
-        log.info ("INFO :: PurchasePostage request details")
-        log.info ("INFO :: Customer ID == " + custID)
-        log.info ("INFO :: Meter Number == " + meterno)
-        log.info ("INFO :: User ID == " + userID)
-        log.info ("INFO :: Available Postage  == " + availablePostage)
-        log.info ("INFO :: Control Total == " + controlTotal)
-        log.info ("INFO :: Max. Postage Balance == " + maxPostageBal)
+        log.info ("AcountInfo :: PurchasePostage request details")
+        log.info ("AcountInfo :: Customer ID == " + custID)
+        log.info ("AcountInfo :: Meter Number == " + meterno)
+        log.info ("AcountInfo :: User ID == " + userID)
+        log.info ("AcountInfo :: Available Postage  == " + availablePostage)
+        log.info ("AcountInfo :: Control Total == " + controlTotal)
+        log.info ("AcountInfo :: Max. Postage Balance == " + maxPostageBal)
+    }
+    
+    def createUnfundedIndicium( def testStepName, String nameSpace){
+        def url = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateUnfundedIndiciumResponse[1]/ns1:URL[1]}')
+        def stampsTxID = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateUnfundedIndiciumResponse[1]/ns1:StampsTxID[1]}')
+        def tracking = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateUnfundedIndiciumResponse[1]/ns1:TrackingNumber[1]}')
+        captureURL.printURL(url, testStepName);
+        log.info (testStepName + ":: StampsTxTD : " + stampsTxID)
+        log.info (testStepName + ":: Tracking Number : " +tracking)
     }
     
 }

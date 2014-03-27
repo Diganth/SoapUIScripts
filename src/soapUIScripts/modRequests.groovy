@@ -59,6 +59,9 @@ class modRequests {
                 else if (rawRequest.contains("GetAccountInfo")){
                     
                 }
+                else if (rawRequest.contains("CreateUnfundedIndicium")){
+                    
+                }
                 else {
                     log.error("Unable to find any valid acceptable types in request.");
                 }
@@ -69,5 +72,22 @@ class modRequests {
     def createIndicium(def testStepName, String nameSpace){
         
     }
+
+    def registration(def testStepName, String nameSpace){
+        
+    }
+    
+    def purchasePostage(def testStepName, String nameSpace){
+        
+    }
+    
+    def getAccountInfo(def testStepName, String nameSpace){
+        
+    }
+    
+    def createUnfundedIndicium(def testStepName, String nameSpace){
+        
+    }
+
 }
 
