@@ -75,8 +75,8 @@ class modRequests {
 
     def registration(def testStepName, String nameSpace){
         
-    }
-    
+}
+
     def purchasePostage(def testStepName, String nameSpace){
         
     }
