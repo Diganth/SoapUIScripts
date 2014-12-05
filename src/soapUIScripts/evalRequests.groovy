@@ -26,6 +26,7 @@ import com.eviware.soapui.model.support.ModelSupport
 import com.eviware.soapui.support.UISupport
 import com.eviware.soapui.support.editor.xml.*
 import com.eviware.soapui.support.XmlHolder
+import com.eviware.soapui.support.GroovyUtils
 import com.eviware.soapui.LogMonitor.*
 import com.eviware.soapui.SoapUI
 import soapUIScripts.*
@@ -38,7 +39,7 @@ import soapUIScripts.*
  */
 class evalRequests {
     def context, util, log;
-    def captureURL, captureImageData;  
+    def captureURL, captureImageData, responseHolder;  
     evalRequests(def util, def context, def log){
         this.util = util
         this.context = context
@@ -48,6 +49,7 @@ class evalRequests {
     }
     def testCaseIterator(){
         def testSteps = util.testStepsList();
+        String[] nameSpaceURL = null;
         testSteps.each {
             // Checking if TestStep is of WSDLTestRequest type
             if (it instanceof com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep){
@@ -56,24 +58,15 @@ class evalRequests {
                 log.debug(it.name + ":: *********** Raw Request **************** ")
                 log.debug(it.name + ":: " + rawRequest)               
                 
-                //log.debug(it.name + ":: *********** Response **************** :")
-                //log.debug(it.name + ":: " + rawResponse)
-                
                 // Reading Raw request to extract Namespace to use.
-                String[] nameSpaceURL= rawRequest.findAll('https?://[^\\s<>"]+|www\\.[^\\s<>"]+')
+                if (rawRequest != null)
+                   nameSpaceURL = rawRequest.findAll('https?://[^\\s<>"]+|www\\.[^\\s<>"]+')
                 
                 if (rawRequest.contains("CreateIndicium")){
-                    def responseHolder = new XmlHolder(it.getProperty("Response").getValue())
-                    responseHolder.namespaces['ns2'] = nameSpaceURL[1]
-                    if (responseHolder != null && responseHolder.getDomNode("//ns1:CreateIndiciumResponse[1]/ns1:ImageData[1]/ns1:base64Binary[1]")!= null){
-                        responseHolder.removeDomNodes("//ns1:CreateIndiciumResponse[1]/ns1:ImageData[1]/ns1:base64Binary[1]")
-                    }    
-                    log.debug(it.name + ":: *********** Response **************** :")
-                    log.debug(it.name + ":: " + responseHolder)
                     createIndicium(it,nameSpaceURL[1])
                 }
                 else if (rawRequest.contains("CreateScanForm")){
-                    createScanForm(it.nameSpaceURL[1])
+                    createScanForm(it,nameSpaceURL[1])
                 }
                 else if (rawRequest.contains("RegisterAccount")){
                     registration(it.name, nameSpaceURL[1])
@@ -99,6 +92,7 @@ class evalRequests {
     def createIndicium(def testStep, String nameSpace){
         
         def testStepName = testStep.name
+        def grUtils = new GroovyUtils(context);
         
         def imageType = context.expand ('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndicium[1]/ns1:ImageType}')
         def returnImageData = context.expand ('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndicium[1]/ns1:ReturnImageData}')
@@ -118,10 +112,19 @@ class evalRequests {
         log.info(testStepName + ":: Response -- Service Type : " +serviceType)
         log.info(testStepName + ":: Response -- PrintLayout : " + layout)
         
+        responseHolder = grUtils.getXmlHolder(testStep.getProperty("Response").getValue())
+        responseHolder.removeDomNodes('//ns1:CreateIndiciumResponse[1]/ns1:ImageData[1]/ns1:base64Binary[1]')
+        responseHolder.updateProperty()
+        log.debug(testStepName + ":: *********** Response **************** :")
+        log.debug(testStepName + ":: " + responseHolder.getPrettyXml())
+        
         if (returnImageData == "true")
             captureImageData.base64decoder(base64Data, testStepName, serviceType, layout, imageType);
         else
             captureURL.printURL(url, testStepName, serviceType, layout);
+    }
+    def createScanForm(def testStepName, String nameSpace){
+        
     }
     def registration(def testStepName, String nameSpace){
         def userName = context.expand('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccount[1]/ns1:UserName[1]}')
