@@ -57,6 +57,9 @@ def printURL (arg1) {
 					else if (url.contains(".png")){
 						file_create (it.name, ".png", url, arg1)
 					}
+                                        else if (url.contains(".zpl")){
+                                            file_create (it.name, ".zpl", url, arg1)
+                                        }
 				}	
 				else {
 					logFile << "${today}::ERROR::Unable to capture label for -> ${it.name} ->${arg1}" <<"\r\n"

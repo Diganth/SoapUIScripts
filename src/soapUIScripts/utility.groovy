@@ -77,14 +77,14 @@ class utility {
     //Returns the testStep with specified Property Name
     def propertyTestStep(){
         if(context.testCase.getTestStepByName(propName) == null)
-            SoapUI.log "Check Property File Name. Supplied property name does not exist."
+            SoapUI.log "SoapUIScript.jar::Check Property File Name. Supplied property name does not exist."
         else
             return context.testCase.getTestStepByName(propName);
     }
     //Reads from Property file
     def readProperty(def property){
         if (this.propertyTestStep().getPropertyValue(property) == null){
-            SoapUI.log "Check Property Name. Supplied property name does not match " + property;
+            SoapUI.log "SoapUIScript.jar::Check Property Name. Supplied property name does not match " + property;
             return 0;
         }
         else
@@ -97,7 +97,7 @@ class utility {
     //Reads from TestSuite property
     def readTestSuiteProperty(def property){
         if (this.testSuite().getPropertyValue(property) == null){
-            SoapUI.log "Check TestSuite Property Name. Supplied property name does not match " + property;
+            SoapUI.log "SoapUIScript.jar::Check TestSuite Property Name. Supplied property name does not match " + property;
             return 0;
         }
         else

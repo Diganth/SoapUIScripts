@@ -24,6 +24,8 @@ import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunContext
 import com.eviware.soapui.model.project.ProjectFactoryRegistry
 import com.eviware.soapui.model.support.ModelSupport
 import com.eviware.soapui.support.UISupport
+import com.eviware.soapui.support.editor.xml.*
+import com.eviware.soapui.support.XmlHolder
 import com.eviware.soapui.LogMonitor.*
 import com.eviware.soapui.SoapUI
 import soapUIScripts.*
@@ -36,23 +38,42 @@ import soapUIScripts.*
  */
 class evalRequests {
     def context, util, log;
-    def captureURL;
+    def captureURL, captureImageData;  
     evalRequests(def util, def context, def log){
         this.util = util
         this.context = context
         this.log = log
         captureURL = new captureURL (util, log)
+        captureImageData = new captureImageData (util, log)
     }
     def testCaseIterator(){
         def testSteps = util.testStepsList();
         testSteps.each {
             // Checking if TestStep is of WSDLTestRequest type
             if (it instanceof com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep){
+                
+                def rawRequest = it.getProperty("RawRequest").getValue()
+                log.debug(it.name + ":: *********** Raw Request **************** ")
+                log.debug(it.name + ":: " + rawRequest)               
+                
+                //log.debug(it.name + ":: *********** Response **************** :")
+                //log.debug(it.name + ":: " + rawResponse)
+                
                 // Reading Raw request to extract Namespace to use.
-                def rawRequest = it.getProperty("Request").getValue()
                 String[] nameSpaceURL= rawRequest.findAll('https?://[^\\s<>"]+|www\\.[^\\s<>"]+')
+                
                 if (rawRequest.contains("CreateIndicium")){
-                    createIndicium(it.name,nameSpaceURL[1])
+                    def responseHolder = new XmlHolder(it.getProperty("Response").getValue())
+                    responseHolder.namespaces['ns2'] = nameSpaceURL[1]
+                    if (responseHolder != null && responseHolder.getDomNode("//ns1:CreateIndiciumResponse[1]/ns1:ImageData[1]/ns1:base64Binary[1]")!= null){
+                        responseHolder.removeDomNodes("//ns1:CreateIndiciumResponse[1]/ns1:ImageData[1]/ns1:base64Binary[1]")
+                    }    
+                    log.debug(it.name + ":: *********** Response **************** :")
+                    log.debug(it.name + ":: " + responseHolder)
+                    createIndicium(it,nameSpaceURL[1])
+                }
+                else if (rawRequest.contains("CreateScanForm")){
+                    createScanForm(it.nameSpaceURL[1])
                 }
                 else if (rawRequest.contains("RegisterAccount")){
                     registration(it.name, nameSpaceURL[1])
@@ -66,19 +87,41 @@ class evalRequests {
                 else if (rawRequest.contains("CreateUnfundedIndicium")){
                     createUnfundedIndicium(it.name,nameSpaceURL[1])
                 }
-                else {
+                else if (rawRequest.contains("CreateNetStampsIndicia")){
+                    createNetStampsIndicia(it.name, nameSpaceURL[1])
+                }
+                else{
                     log.error("Unable to find any valid acceptable types in request.");
                 }
             }
         }
     }
-    def createIndicium(def testStepName, String nameSpace){
+    def createIndicium(def testStep, String nameSpace){
+        
+        def testStepName = testStep.name
+        
+        def imageType = context.expand ('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndicium[1]/ns1:ImageType}')
+        def returnImageData = context.expand ('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndicium[1]/ns1:ReturnImageData}')
+        
         def url = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:URL[1]}')
         def stampsTxID = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:StampsTxID[1]}')
         def tracking = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:TrackingNumber[1]}')
-        captureURL.printURL(url, testStepName);
-        log.info(testStepName + ":: StampsTxTD : " + stampsTxID)
-        log.info(testStepName + ":: Tracking Number : " +tracking)
+        def serviceType = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:Rate[1]/ns1:ServiceType[1]}')
+        def layout = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:Rate[1]/ns1:PrintLayout[1]}')
+        String base64Data = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:ImageData[1]/ns1:base64Binary[1]}')
+        
+        log.info(testStepName + ":: Request -- Return Image Data : " + returnImageData)
+        log.info(testStepName + ":: Request -- Image Type : " + imageType)
+        
+        log.info(testStepName + ":: Response -- StampsTxTD : " + stampsTxID)
+        log.info(testStepName + ":: Response -- Tracking Number : " +tracking)
+        log.info(testStepName + ":: Response -- Service Type : " +serviceType)
+        log.info(testStepName + ":: Response -- PrintLayout : " + layout)
+        
+        if (returnImageData == "true")
+            captureImageData.base64decoder(base64Data, testStepName, serviceType, layout, imageType);
+        else
+            captureURL.printURL(url, testStepName, serviceType, layout);
     }
     def registration(def testStepName, String nameSpace){
         def userName = context.expand('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccount[1]/ns1:UserName[1]}')
@@ -136,5 +179,22 @@ class evalRequests {
         log.info (testStepName + ":: Tracking Number : " +tracking)
     }
 
+    def createNetStampsIndicia(def testStep, String nameSpace){
+        
+        def testStepName = testStep.name
+        def rawResponse = testStep.getProperty("Response").getValue()
+        def imageType = context.expand ('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateNetStampsIndicia[1]/ns1:ImageType}')
+            
+        def url = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateNetStampsIndiciaResponse[1]/ns1:URL[1]}')
+        def stampsTxID = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateNetStampsIndiciaResponse[1]/ns1:StampsTxID[1]}')
+        def netstampsStatus = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateNetStampsIndiciaResponse[1]/ns1:NetstampsStatus[1]}')
+        
+        log.info(testStepName + ":: Image Type : " + imageType)
+        
+        log.info(testStepName + ":: StampsTxTD : " + stampsTxID)
+        log.info(testStepName + ":: NetStampsStatus : " + netstampsStatus)
+        
+        captureURL.printURL(url, testStepName, null, null);
+    }
 }
 

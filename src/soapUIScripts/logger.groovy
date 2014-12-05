@@ -45,13 +45,13 @@ class logger {
         logDir = new File(dirName)
         if(!logDir.isDirectory() && util.readProperty("LogFileLocation").toString()== "0") //checking if folder exists
         {
-            SoapUI.log "Creating Directory :" + dirName + "as it does not exist"
+            SoapUI.log "SoapUIScript.jar::Creating Directory :" + dirName + "as it does not exist"
             logDir.mkdirs()
             logFile = new File( logDir, "log.log")
             util.writeProperty("LogFileLocation", dirName)
         }
         else {
-            SoapUI.log "Log Directory and File already exist at :" + dirName
+            SoapUI.log "SoapUIScript.jar::Log Directory and File already exist at :" + dirName
             logDir = new File(util.readProperty("LogFileLocation"))
             logFile = new File( logDir, "log.log")
             

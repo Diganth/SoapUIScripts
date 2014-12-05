@@ -18,6 +18,13 @@
 
 package soapUIScripts
 
+import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunContext
+import com.eviware.soapui.model.project.ProjectFactoryRegistry
+import com.eviware.soapui.model.support.ModelSupport
+import com.eviware.soapui.support.UISupport
+import com.eviware.soapui.LogMonitor.*
+import com.eviware.soapui.SoapUI
+import soapUIScripts.utility
 /**
  *
  * @author Diganth Aswath <diganth2004@gmail.com>
@@ -80,8 +87,8 @@ class startExec {
     }
     
     def executeOnce(){
+        SoapUI.log ("SoapUIScript.jar::In Execute Once()")
         evaluator.testCaseIterator();
-        util.writeProperty("LogFileLocation","0") //Erasing log file location in the property file.
     }
 
 }
