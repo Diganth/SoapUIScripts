@@ -74,6 +74,7 @@ class startExec {
     }
     
     def executeLoopRequests(){
+        String error = null;
         evaluator.testCaseIterator();
         def endLoop = util.readProperty("StopLoop").toString()
         if (endLoop.toString()=="T" || endLoop.toString()=="True" || endLoop.toString()=="true"){
@@ -87,8 +88,10 @@ class startExec {
     }
     
     def executeOnce(){
+        String error = null;
         SoapUI.log ("SoapUIScript.jar::In Execute Once()")
-        evaluator.testCaseIterator();
+        error = evaluator.testCaseIterator();
+        return error;
     }
 
 }

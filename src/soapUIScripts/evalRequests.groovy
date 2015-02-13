@@ -39,7 +39,8 @@ import soapUIScripts.*
  */
 class evalRequests {
     def context, util, log;
-    def captureURL, captureImageData, responseHolder;  
+    def captureURL, captureImageData, responseHolder;
+
     evalRequests(def util, def context, def log){
         this.util = util
         this.context = context
@@ -47,49 +48,70 @@ class evalRequests {
         captureURL = new captureURL (util, log)
         captureImageData = new captureImageData (util, log)
     }
-    def testCaseIterator(){
+    String testCaseIterator(){
         def testSteps = util.testStepsList();
         String[] nameSpaceURL = null;
+        String error = null;
         testSteps.each {
             // Checking if TestStep is of WSDLTestRequest type
             if (it instanceof com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep){
                 
                 def rawRequest = it.getProperty("RawRequest").getValue()
                 log.debug(it.name + ":: *********** Raw Request **************** ")
+                log.debug("\r\n")
                 log.debug(it.name + ":: " + rawRequest)               
-                
+                def response = it.getProperty("Response").getValue()
+                             
                 // Reading Raw request to extract Namespace to use.
-                if (rawRequest != null)
+                if ((rawRequest != null) && (response.contains("faultstring") == false)){
                    nameSpaceURL = rawRequest.findAll('https?://[^\\s<>"]+|www\\.[^\\s<>"]+')
                 
-                if (rawRequest.contains("CreateIndicium")){
-                    createIndicium(it,nameSpaceURL[1])
-                }
-                else if (rawRequest.contains("CreateScanForm")){
-                    createScanForm(it,nameSpaceURL[1])
-                }
-                else if (rawRequest.contains("RegisterAccount")){
-                    registration(it.name, nameSpaceURL[1])
-                }
-                else if (rawRequest.contains("PurchasePostage")){
-                    purchasePostage(it.name,nameSpaceURL[1])
-                }
-                else if (rawRequest.contains("GetAccountInfo")){
-                    getAccountInfo(it.name,nameSpaceURL[1])
-                }
-                else if (rawRequest.contains("CreateUnfundedIndicium")){
-                    createUnfundedIndicium(it.name,nameSpaceURL[1])
-                }
-                else if (rawRequest.contains("CreateNetStampsIndicia")){
-                    createNetStampsIndicia(it.name, nameSpaceURL[1])
+                    if (rawRequest.contains("CreateIndicium")){
+                        error = createIndicium(it,nameSpaceURL[1])
+                        log.info(it.name + ":: Response returned -- " + error)
+                    }
+                    else if (rawRequest.contains("CreateScanForm")){
+                        error = createScanForm(it,nameSpaceURL[1])
+                        log.info(it.name + ":: Response returned -- " + error)
+                    }
+                    else if (rawRequest.contains("RegisterAccount")){
+                        registration(it.name, nameSpaceURL[1])
+                    }
+                    else if (rawRequest.contains("PurchasePostage")){
+                        purchasePostage(it.name,nameSpaceURL[1])
+                    }
+                    else if (rawRequest.contains("GetAccountInfo")){
+                        getAccountInfo(it.name,nameSpaceURL[1])
+                    }
+                    else if (rawRequest.contains("CreateUnfundedIndicium")){
+                        error = createUnfundedIndicium(it.name,nameSpaceURL[1])
+                        log.info(it.name + ":: Response returned -- " + error)
+                    }
+                    else if (rawRequest.contains("CreateNetStampsIndicia")){
+                        error = createNetStampsIndicia(it, nameSpaceURL[1])
+                        log.info(it.name + ":: Response returned -- " + error)
+                    }
+                    else if (rawRequest.contains("CreateEnvelopeIndicium")){
+                        error = createEnvelopeIndicium(it, nameSpaceURL[1])
+                        log.info(it.name + ":: Response returned -- " + error)
+                    }
+                    else if (rawRequest.contains("CreateMailingLabelIndicia")){
+                        error = createMailingLabelIndicia(it, nameSpaceURL[1])
+                        log.info(it.name + ":: Response returned -- " + error)
+                    }
+                    else{
+                        error = "Unable to find any valid acceptable types in request.";
+                        log.error("Unable to find any valid acceptable types in request.");
+                    }
                 }
                 else{
-                    log.error("Unable to find any valid acceptable types in request.");
+                    error = context.expand ('${'+it.name+'#Response#//faultstring[1]}');
                 }
             }
         }
+        return error;
     }
-    def createIndicium(def testStep, String nameSpace){
+    String createIndicium(def testStep, String nameSpace){
         
         def testStepName = testStep.name
         def grUtils = new GroovyUtils(context);
@@ -119,12 +141,28 @@ class evalRequests {
         log.debug(testStepName + ":: " + responseHolder.getPrettyXml())
         
         if (returnImageData == "true")
-            captureImageData.base64decoder(base64Data, testStepName, serviceType, layout, imageType);
+            return captureImageData.base64decoder(base64Data, testStepName, serviceType, layout, imageType);
         else
-            captureURL.printURL(url, testStepName, serviceType, layout);
-    }
-    def createScanForm(def testStepName, String nameSpace){
+            return captureURL.printURL(url, testStepName, serviceType, layout);
         
+    }
+    String createScanForm(def testStep, String nameSpace){
+        
+        def testStepName = testStep.name
+        def grUtils = new GroovyUtils(context);
+        
+        def url = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateScanFormResponse[1]/ns1:Url[1]}')
+        def scanFormID = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateScanFormResponse[1]/ns1:ScanFormId[1]}')
+        
+        log.info(testStepName + ":: Response -- ScanFormID : " + scanFormID)
+        log.info(testStepName + ":: Response -- ScanForm URL : " + url)
+        
+        responseHolder = grUtils.getXmlHolder(testStep.getProperty("Response").getValue())
+        log.debug(testStepName + ":: *********** Response **************** :")
+        log.debug(testStepName + ":: " + responseHolder.getPrettyXml())
+        
+        return captureURL.printURL(url, testStepName, null, null);
+         
     }
     def registration(def testStepName, String nameSpace){
         def userName = context.expand('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccount[1]/ns1:UserName[1]}')
@@ -173,16 +211,16 @@ class evalRequests {
         log.info ("AcountInfo :: Max. Postage Balance == " + maxPostageBal)
     }
     
-    def createUnfundedIndicium( def testStepName, String nameSpace){
+    String  createUnfundedIndicium( def testStepName, String nameSpace){
         def url = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateUnfundedIndiciumResponse[1]/ns1:URL[1]}')
         def stampsTxID = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateUnfundedIndiciumResponse[1]/ns1:StampsTxID[1]}')
         def tracking = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateUnfundedIndiciumResponse[1]/ns1:TrackingNumber[1]}')
-        captureURL.printURL(url, testStepName);
         log.info (testStepName + ":: StampsTxTD : " + stampsTxID)
         log.info (testStepName + ":: Tracking Number : " +tracking)
+        return captureURL.printURL(url, testStepName);
     }
 
-    def createNetStampsIndicia(def testStep, String nameSpace){
+    String createNetStampsIndicia(def testStep, String nameSpace){
         
         def testStepName = testStep.name
         def rawResponse = testStep.getProperty("Response").getValue()
@@ -193,11 +231,55 @@ class evalRequests {
         def netstampsStatus = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateNetStampsIndiciaResponse[1]/ns1:NetstampsStatus[1]}')
         
         log.info(testStepName + ":: Image Type : " + imageType)
-        
         log.info(testStepName + ":: StampsTxTD : " + stampsTxID)
         log.info(testStepName + ":: NetStampsStatus : " + netstampsStatus)
+        log.debug(testStepName + ":: *********** Raw Response **************** ")
+        log.debug("\r\n")
+        log.debug(testStepName + ":: " + rawResponse)
         
-        captureURL.printURL(url, testStepName, null, null);
+        return captureURL.printURL(url, testStepName, null, null);
+    }
+    
+    String createEnvelopeIndicium(def testStep, String nameSpace){
+        
+        def testStepName = testStep.name
+        def rawResponse = testStep.getProperty("Response").getValue()
+        //def imageType = context.expand ('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateNetStampsIndicia[1]/ns1:ImageType}')
+            
+        def url = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateEnvelopeIndiciumResponse[1]/ns1:URL[1]}')
+        def stampsTxID = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateEnvelopeIndiciumResponse[1]/ns1:StampsTxID[1]}')
+        def trackingNumber = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateEnvelopeIndiciumResponse[1]/ns1:TrackingNumber[1]}')
+        
+        //log.info(testStepName + ":: Image Type : " + imageType)
+        
+        log.info(testStepName + ":: StampsTxTD : " + stampsTxID)
+        log.info(testStepName + ":: TrackingNumber : " + trackingNumber)
+        log.debug(testStepName + ":: *********** Raw Response **************** ")
+        log.debug("\r\n")
+        log.debug(testStepName + ":: " + rawResponse)
+        
+        return captureURL.printURL(url, testStepName, null, null);
+    }
+    
+     String createMailingLabelIndicia(def testStep, String nameSpace){
+        
+        def testStepName = testStep.name
+        def rawResponse = testStep.getProperty("Response").getValue()
+        //def imageType = context.expand ('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateNetStampsIndicia[1]/ns1:ImageType}')
+            
+        def url = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateMailingLabelIndiciaResponse[1]/ns1:Url[1]}')
+        def stampsTxID = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateMailingLabelIndiciaResponse[1]/ns1:StampsTxID[1]}')
+        def confirmationNumbers = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateMailingLabelIndiciaResponse[1]/ns1:ConfirmationNumbers[1]/ns1:string[1]}')
+        
+        //log.info(testStepName + ":: Image Type : " + imageType)
+        
+        log.info(testStepName + ":: StampsTxTD : " + stampsTxID)
+        log.info(testStepName + ":: TrackingNumber : " + confirmationNumbers)
+        log.debug(testStepName + ":: *********** Raw Response **************** ")
+        log.debug("\r\n")
+        log.debug(testStepName + ":: " + rawResponse)
+        
+        return captureURL.printURL(url, testStepName, null, null);
     }
 }
 

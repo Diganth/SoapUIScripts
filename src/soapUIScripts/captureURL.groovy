@@ -45,12 +45,14 @@ class captureURL {
     //Function to create file with TestStep name depending on imagetype
     def file_create (imageType, url){
         def fileName;
-        if (serviceType == null )
+        if (serviceType == null)
             fileName = util.readProperty("LogFileLocation")+testStepName+"_"+layout+imageType
         else if (serviceType == null && layout == null)
             fileName = util.readProperty("LogFileLocation")+testStepName+"_"+util.todayTime()+imageType
-        else
+        else if (layout == null)
             fileName = util.readProperty("LogFileLocation")+testStepName+"_"+serviceType+imageType
+        else
+            fileName = util.readProperty("LogFileLocation")+testStepName+imageType
         // Write output to file created
         writetoFile (fileName, url)
     }
@@ -82,56 +84,69 @@ class captureURL {
 	
     // Function that controls the logic of iterating through the testSteps to obtain
     // URL from the response.
-    def printURL (def url, def testStepName, def serviceType, def layout) {
+    public String printURL (def url, def testStepName, def serviceType, def layout) {
+        String errorFlag = null;
         this.url = url;
         this.testStepName = testStepName;
         this.serviceType = serviceType;
         this.layout = layout;
-        log.info("URL -> " +url);
+        //log.info("URL -> " +url);
         // Checking if URL string is empty
         if(url?.trim()) {
             String[] urlSplit = url.split(" ")
             for (int i = 0; i < urlSplit.length; i++)
             {
+                log.debug("URL Split  ->" +urlSplit[i]);
                 if(urlSplit[i].contains(".pdf")) {
                     file_create ("_" +i+ ".pdf", urlSplit[i])
                     log.info("Captured label for ->" + testStepName);
+                    errorFlag ="No Error";
                 }
                 else if (urlSplit[i].contains(".gif")){
                     file_create ("_" +i+ ".gif", urlSplit[i])
                     log.info("Captured label for ->" + testStepName);
+                    errorFlag ="No Error";
                 }
                 else if (urlSplit[i].contains(".png")){
                     file_create ("_" +i+ ".png", urlSplit[i])
                     log.info("Captured label for ->" + testStepName);
+                      errorFlag ="No Error";
                 }
                 else if (urlSplit[i].contains(".jpg")){
                     file_create ("_" +i+ ".jpg", urlSplit[i])
                     log.info("Captured label for ->" + testStepName);
+                      errorFlag ="No Error";
                 }
                 else if (urlSplit[i].contains(".zpl")){
                     file_create ("_" +i+ ".zpl", urlSplit[i])
-                    log.info("Captured label for ->" + testStepName);
+                     log.info("Captured label for ->" + testStepName);
+                      errorFlag ="No Error";
                 }
                 else if (urlSplit[i].contains(".azpl")){
                     file_create ("_" +i+ ".azpl", urlSplit[i])
                     log.info("Captured label for ->" + testStepName);
+                     errorFlag ="No Error";
                 }
                 else if (urlSplit[i].contains(".bzpl")){
                     file_create ("_" +i+ ".bzpl", urlSplit[i])
                     log.info("Captured label for ->" + testStepName);
+                     errorFlag ="No Error";
                 }
                 else if (urlSplit[i].contains("epl")){
                     file_create ("_" +i+ ".epl", urlSplit[i])
                     log.info("Captured label for ->" + testStepName);
+                     errorFlag ="No Error";
                 }
                 else{
                     log.info("Unable to capture label for -> "+ testStepName +" as it doesnot match supported formats.");
+                    errorFlag = "Unable to capture label for -> "+ testStepName +" as it doesnot match supported formats.";
                 }
             }
+            return errorFlag;
         }
         else {
             log.error("Unable to capture label for ->"+ testStepName)
+            return "Unable to capture label for ->"+ testStepName;
         }
     }
 }

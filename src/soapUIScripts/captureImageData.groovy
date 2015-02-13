@@ -79,8 +79,9 @@ class captureImageData {
     }
     
    // Function to decode base64 encoded data.
-   def base64decoder (String imageData, def testStepName, def serviceType, def layout, def imageType){
+   public String base64decoder (String imageData, def testStepName, def serviceType, def layout, def imageType){
        //log.debug("Image Data :: " +imageData)
+       String errorFlag = null;
        this.imageData = imageData;
        this.testStepName = testStepName;
        this.serviceType = serviceType;
@@ -101,41 +102,52 @@ class captureImageData {
             if(imageType.contains("Pdf")) {
                 file_create2(decoded, ".pdf")
                 log.info("Captured label for ->" + testStepName);
+                errorFlag = "No Error";
             }
             else if (imageType.contains("Gif")){
                 file_create2(decoded, ".gif")
                 log.info("Captured label for ->" + testStepName);
+                errorFlag = "No Error";
             }
             else if (imageType.contains("Png")){
                 file_create2(decoded, ".png")
                 log.info("Captured label for ->" + testStepName);
+                errorFlag = "No Error";
             }
             else if (imageType.contains("Jpg")){
                 file_create2(decoded, ".jpg")
                 log.info("Captured label for ->" + testStepName);
+                errorFlag = "No Error";
             }
             else if (imageType.contains("Zpl")){
                 file_create(new String(decoded, "Cp1252"), ".zpl")
                 log.info("Captured label for ->" + testStepName);
+                errorFlag = "No Error";
             }
             else if (imageType.contains("AZpl")){
                 file_create(new String(decoded, "Cp1252"), ".azpl")
                 log.info("Captured label for ->" + testStepName);
+                errorFlag = "No Error";
             }
             else if (imageType.contains("BZpl")){
                 file_create(new String(decoded, "Cp1252"), ".bzpl")
                 log.info("Captured label for ->" + testStepName);
+                errorFlag = "No Error";
             }
             else if (imageType.contains("Epl")){
                 file_create(new String(decoded, "Cp1252"), ".epl")
                 log.info("Captured label for ->" + testStepName);
+                errorFlag = "No Error";
             }
             else{
                 log.info("Unable to capture label for -> "+ testStepName +" as it doesnot match supported formats.");
+                errorFlag = "Unable to capture label for -> "+ testStepName +" as it doesnot match supported formats.";
             }
+            return errorFlag;
         }
        else {
             log.error("Unable to capture label for -> "+ testStepName)
+            return "Unable to capture label for -> "+ testStepName;
         }
    }
 }
