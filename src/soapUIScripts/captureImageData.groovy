@@ -34,7 +34,7 @@ import org.apache.commons.codec.binary.Base64
 class captureImageData {
     
     def util, log, testStepName, serviceType, layout, imageType;
-    String imageData;
+    String[] imageData;
     
     captureImageData(utility util, logger log){
         this.util = util;
@@ -79,76 +79,79 @@ class captureImageData {
     }
     
    // Function to decode base64 encoded data.
-   public String base64decoder (String imageData, def testStepName, def serviceType, def layout, def imageType){
+   public String base64decoder (String[] imageData, def testStepName, def serviceType, def layout, def imageType){
        //log.debug("Image Data :: " +imageData)
        String errorFlag = null;
-       this.imageData = imageData;
+       //this.imageData = imageData;
        this.testStepName = testStepName;
        this.serviceType = serviceType;
        this.layout = layout;
        this.imageType = imageType;
        log.debug("In the base64 decoder function -> "+ testStepName)
-       if (imageData?.trim()){
-            Base64 b64 = new Base64();
-            byte[] decoded = b64.decodeBase64(imageData.getBytes())
-            if ((decoded == null) || (decoded.length == 0 ) ){
-                log.error ("DECODING Return Image data FAILED :: TestStep -> " + testStepName)
-            }
-            /*byte[] decodedImageData = new byte[decoded.length];
-            for ( int i = 0; i < decoded.length; i++ ){
+       for (int i = 0; i < imageData.length; i++){
+            if (imageData[i]?.trim()){
+                Base64 b64 = new Base64();
+                byte[] decoded = b64.decodeBase64(imageData[i].getBytes())
+                if ((decoded == null) || (decoded.length == 0 ) ){
+                    log.error ("DECODING Return Image data FAILED :: TestStep -> " + testStepName)
+                }
+                /*byte[] decodedImageData = new byte[decoded.length];
+                for ( int i = 0; i < decoded.length; i++ ){
                 decodedImageData[i] = (byte)decoded[i];
-            }*/
-            //log.debug("Decoded Data :: " +new String(decoded, "Cp1252"))
-            if(imageType.contains("Pdf")) {
-                file_create2(decoded, ".pdf")
-                log.info("Captured label for ->" + testStepName);
-                errorFlag = "No Error";
+                }*/
+                //log.debug("Decoded Data :: " +new String(decoded, "Cp1252"))
+                if(imageType.contains("Pdf")) {
+                    file_create2(decoded, "_" +i+ ".pdf")
+                    log.info("Captured ReturnImageData label for ->" + testStepName);
+                    errorFlag = "No Error";
+                }
+                else if (imageType.contains("Gif")){
+                    file_create2(decoded, "_" +i+ ".gif")
+                    log.info("Captured ReturnImageData label for ->" + testStepName);
+                    errorFlag = "No Error";
+                }
+                else if (imageType.contains("Png")){
+                    file_create2(decoded, "_" +i+ ".png")
+                    log.info("Captured ReturnImageData label for ->" + testStepName);
+                    errorFlag = "No Error";
+                }
+                else if (imageType.contains("Jpg")){
+                    file_create2(decoded, "_" +i+ ".jpg")
+                    log.info("Captured ReturnImageData label for ->" + testStepName);
+                    errorFlag = "No Error";
+                }
+                else if (imageType.contains("Zpl")){
+                    file_create(new String(decoded, "Cp1252"), "_" +i+ ".zpl")
+                    log.info("Captured ReturnImageData label for ->" + testStepName);
+                    errorFlag = "No Error";
+                }
+                else if (imageType.contains("AZpl")){
+                    file_create(new String(decoded, "Cp1252"), "_" +i+ ".azpl")
+                    log.info("Captured ReturnImageData label for ->" + testStepName);
+                    errorFlag = "No Error";
+                }
+                else if (imageType.contains("BZpl")){
+                    file_create(new String(decoded, "Cp1252"), "_" +i+ ".bzpl")
+                    log.info("Captured ReturnImageData label for ->" + testStepName);
+                    errorFlag = "No Error";
+                }
+                else if (imageType.contains("Epl")){
+                    file_create(new String(decoded, "Cp1252"), "_" +i+ ".epl")
+                    log.info("Captured ReturnImageData label for ->" + testStepName);
+                    errorFlag = "No Error";
+                }
+                else{
+                    log.info("Unable to capture ReturnImageData label for -> "+ testStepName +" as it doesnot match supported formats.");
+                    errorFlag = "Unable to capture ReturnImageData label for -> "+ testStepName +" as it doesnot match supported formats.";
+                }
+                
             }
-            else if (imageType.contains("Gif")){
-                file_create2(decoded, ".gif")
-                log.info("Captured label for ->" + testStepName);
-                errorFlag = "No Error";
+            else {
+                log.error("Unable to capture ReturnImageData label for -> "+ testStepName)
+                errorFlag = "Unable to capture ReturnImageData label for -> "+ testStepName;
             }
-            else if (imageType.contains("Png")){
-                file_create2(decoded, ".png")
-                log.info("Captured label for ->" + testStepName);
-                errorFlag = "No Error";
-            }
-            else if (imageType.contains("Jpg")){
-                file_create2(decoded, ".jpg")
-                log.info("Captured label for ->" + testStepName);
-                errorFlag = "No Error";
-            }
-            else if (imageType.contains("Zpl")){
-                file_create(new String(decoded, "Cp1252"), ".zpl")
-                log.info("Captured label for ->" + testStepName);
-                errorFlag = "No Error";
-            }
-            else if (imageType.contains("AZpl")){
-                file_create(new String(decoded, "Cp1252"), ".azpl")
-                log.info("Captured label for ->" + testStepName);
-                errorFlag = "No Error";
-            }
-            else if (imageType.contains("BZpl")){
-                file_create(new String(decoded, "Cp1252"), ".bzpl")
-                log.info("Captured label for ->" + testStepName);
-                errorFlag = "No Error";
-            }
-            else if (imageType.contains("Epl")){
-                file_create(new String(decoded, "Cp1252"), ".epl")
-                log.info("Captured label for ->" + testStepName);
-                errorFlag = "No Error";
-            }
-            else{
-                log.info("Unable to capture label for -> "+ testStepName +" as it doesnot match supported formats.");
-                errorFlag = "Unable to capture label for -> "+ testStepName +" as it doesnot match supported formats.";
-            }
-            return errorFlag;
         }
-       else {
-            log.error("Unable to capture label for -> "+ testStepName)
-            return "Unable to capture label for -> "+ testStepName;
-        }
+       return errorFlag;
    }
 }
 

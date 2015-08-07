@@ -39,7 +39,7 @@ import soapUIScripts.*
  */
 class evalRequests {
     def context, util, log;
-    def captureURL, captureImageData, responseHolder;
+    def captureURL, captureImageData, responseHolder, requestHolder, captureResponses;
 
     evalRequests(def util, def context, def log){
         this.util = util
@@ -47,6 +47,7 @@ class evalRequests {
         this.log = log
         captureURL = new captureURL (util, log)
         captureImageData = new captureImageData (util, log)
+        captureResponses = new captureResponses (util, log)
     }
     String testCaseIterator(){
         def testSteps = util.testStepsList();
@@ -75,16 +76,17 @@ class evalRequests {
                         log.info(it.name + ":: Response returned -- " + error)
                     }
                     else if (rawRequest.contains("RegisterAccount")){
-                        registration(it.name, nameSpaceURL[1])
+                        error = registration(it.name, nameSpaceURL[1])
                     }
                     else if (rawRequest.contains("PurchasePostage")){
-                        purchasePostage(it.name,nameSpaceURL[1])
+                        error = purchasePostage(it.name,nameSpaceURL[1])
                     }
                     else if (rawRequest.contains("GetAccountInfo")){
-                        getAccountInfo(it.name,nameSpaceURL[1])
+                        error = getAccountInfo(it,nameSpaceURL[1])
+                        log.info(it.name + ":: Response returned -- " + error)
                     }
                     else if (rawRequest.contains("CreateUnfundedIndicium")){
-                        error = createUnfundedIndicium(it.name,nameSpaceURL[1])
+                        error = createUnfundedIndicium(it,nameSpaceURL[1])
                         log.info(it.name + ":: Response returned -- " + error)
                     }
                     else if (rawRequest.contains("CreateNetStampsIndicia")){
@@ -116,16 +118,23 @@ class evalRequests {
         def testStepName = testStep.name
         def grUtils = new GroovyUtils(context);
         
-        def imageType = context.expand ('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndicium[1]/ns1:ImageType}')
-        def returnImageData = context.expand ('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndicium[1]/ns1:ReturnImageData}')
+        def errorData;
         
-        def url = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:URL[1]}')
-        def stampsTxID = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:StampsTxID[1]}')
-        def tracking = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:TrackingNumber[1]}')
-        def serviceType = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:Rate[1]/ns1:ServiceType[1]}')
-        def layout = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:Rate[1]/ns1:PrintLayout[1]}')
-        String base64Data = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateIndiciumResponse[1]/ns1:ImageData[1]/ns1:base64Binary[1]}')
+        requestHolder = grUtils.getXmlHolder(testStep.getProperty("RawRequest").getValue());
+        requestHolder.declareNamespace("ns1", nameSpace);
         
+        responseHolder = grUtils.getXmlHolder(testStep.getProperty("Response").getValue())
+        
+        def imageType = requestHolder.getNodeValue('//ns1:CreateIndicium/ns1:ImageType');
+        def returnImageData = requestHolder.getNodeValue('//ns1:CreateIndicium/ns1:ReturnImageData');
+        
+        def url = responseHolder.getNodeValue('//ns1:CreateIndiciumResponse[1]/ns1:URL[1]')
+        def stampsTxID = responseHolder.getNodeValue('//ns1:CreateIndiciumResponse[1]/ns1:StampsTxID[1]')
+        def tracking = responseHolder.getNodeValue('//ns1:CreateIndiciumResponse[1]/ns1:TrackingNumber[1]')
+        def serviceType = responseHolder.getNodeValue('//ns1:CreateIndiciumResponse[1]/ns1:Rate[1]/ns1:ServiceType[1]')
+        def layout = responseHolder.getNodeValue('//ns1:CreateIndiciumResponse[1]/ns1:Rate[1]/ns1:PrintLayout[1]')
+        String[] base64Data = responseHolder.getNodeValues('//ns1:CreateIndiciumResponse[1]/ns1:ImageData[1]/ns1:base64Binary')
+              
         log.info(testStepName + ":: Request -- Return Image Data : " + returnImageData)
         log.info(testStepName + ":: Request -- Image Type : " + imageType)
         
@@ -134,37 +143,50 @@ class evalRequests {
         log.info(testStepName + ":: Response -- Service Type : " +serviceType)
         log.info(testStepName + ":: Response -- PrintLayout : " + layout)
         
-        responseHolder = grUtils.getXmlHolder(testStep.getProperty("Response").getValue())
-        responseHolder.removeDomNodes('//ns1:CreateIndiciumResponse[1]/ns1:ImageData[1]/ns1:base64Binary[1]')
+        responseHolder.removeDomNodes('//ns1:CreateIndiciumResponse[1]/ns1:ImageData[1]/ns1:base64Binary')
         responseHolder.updateProperty()
         log.debug(testStepName + ":: *********** Response **************** :")
         log.debug(testStepName + ":: " + responseHolder.getPrettyXml())
         
-        if (returnImageData == "true")
-            return captureImageData.base64decoder(base64Data, testStepName, serviceType, layout, imageType);
-        else
-            return captureURL.printURL(url, testStepName, serviceType, layout);
+        log.debug(testStepName + "Trying to capture response in a different file")
+        errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, serviceType, layout);
         
+        if (returnImageData == "true"){
+            errorData += captureImageData.base64decoder(base64Data, testStepName, serviceType, layout, imageType);
+            
+        }
+        else
+            errorData += captureURL.printURL(url, testStepName, serviceType, layout);
+        
+        return errorData;
     }
     String createScanForm(def testStep, String nameSpace){
         
         def testStepName = testStep.name
         def grUtils = new GroovyUtils(context);
+        def errorData;
+       
+        responseHolder = grUtils.getXmlHolder(testStep.getProperty("Response").getValue())
         
-        def url = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateScanFormResponse[1]/ns1:Url[1]}')
-        def scanFormID = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateScanFormResponse[1]/ns1:ScanFormId[1]}')
-        
+        def url = responseHolder.getNodeValue('//ns1:CreateScanFormResponse[1]/ns1:Url[1]')
+        def scanFormID = responseHolder.getNodeValue('//ns1:CreateScanFormResponse[1]/ns1:ScanFormId[1]')
+              
         log.info(testStepName + ":: Response -- ScanFormID : " + scanFormID)
         log.info(testStepName + ":: Response -- ScanForm URL : " + url)
-        
-        responseHolder = grUtils.getXmlHolder(testStep.getProperty("Response").getValue())
+
         log.debug(testStepName + ":: *********** Response **************** :")
         log.debug(testStepName + ":: " + responseHolder.getPrettyXml())
         
-        return captureURL.printURL(url, testStepName, null, null);
+        log.debug(testStepName + "Trying to capture response in a different file")
+        errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
+        
+        errorData += captureURL.printURL(url, testStepName, null, null);
+        
+        return errorData;
          
     }
-    def registration(def testStepName, String nameSpace){
+    String registration(def testStepName, String nameSpace){
+        
         def userName = context.expand('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccount[1]/ns1:UserName[1]}')
         def userID = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccountResponse[1]/ns1:UserId[1]}')
         def result = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccountResponse[1]/ns1:RegistrationStatus[1]}')
@@ -177,8 +199,10 @@ class evalRequests {
         else if (result == "Success"){
             log.info ("Registration SUCCESS :: User " + userName + " and User ID "+ userID)
         }
+        
+        return NULL;
     }
-    def purchasePostage(def testStepName, String nameSpace){
+    String purchasePostage(def testStepName, String nameSpace){
         def purchaseStatus = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:PurchaseStatus[1]}')
         def transactionID = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:TransactionID[1]}')
         def availablePostage = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:PostageBalance[1]/ns1:AvailablePostage[1]}')
@@ -193,9 +217,17 @@ class evalRequests {
         else{
             log.error ("Purchase Postage REJECTED :: Transaction ID " + transactionID + " :: Available Postage " + availablePostage + ":: Control Total " + controlTotal)
         }
+        
+        return NULL;
     }
         
-    def getAccountInfo(def testStepName, String nameSpace){
+    String getAccountInfo(def testStep, String nameSpace){
+        
+        def testStepName = testStep.name
+        def grUtils = new GroovyUtils(context);
+        def errorData;
+        responseHolder = grUtils.getXmlHolder(testStep.getProperty("Response").getValue())
+        
         def custID = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:CustomerID[1]}')
         def meterno = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:MeterNumber[1]}')
         def userID = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:UserID[1]}')
@@ -209,18 +241,38 @@ class evalRequests {
         log.info ("AcountInfo :: Available Postage  == " + availablePostage)
         log.info ("AcountInfo :: Control Total == " + controlTotal)
         log.info ("AcountInfo :: Max. Postage Balance == " + maxPostageBal)
+        
+        log.debug(testStepName + "Trying to capture response in a different file")
+        errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
+        
+        return errorData;
     }
     
-    String  createUnfundedIndicium( def testStepName, String nameSpace){
+    String  createUnfundedIndicium( def testStep, String nameSpace){
+        
+        def testStepName = testStep.name
+        def grUtils = new GroovyUtils(context);
+        def errorData;
+        responseHolder = grUtils.getXmlHolder(testStep.getProperty("Response").getValue())
+        
         def url = context.expand( '${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateUnfundedIndiciumResponse[1]/ns1:URL[1]}')
         def stampsTxID = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateUnfundedIndiciumResponse[1]/ns1:StampsTxID[1]}')
         def tracking = context.expand ('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:CreateUnfundedIndiciumResponse[1]/ns1:TrackingNumber[1]}')
         log.info (testStepName + ":: StampsTxTD : " + stampsTxID)
         log.info (testStepName + ":: Tracking Number : " +tracking)
-        return captureURL.printURL(url, testStepName);
+        
+        log.debug(testStepName + "Trying to capture response in a different file")
+        errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
+        errorData += captureURL.printURL(url, testStepName, null, null);
+        
+        return errorData;
     }
 
     String createNetStampsIndicia(def testStep, String nameSpace){
+        
+        def grUtils = new GroovyUtils(context);
+        def errorData;
+        responseHolder = grUtils.getXmlHolder(testStep.getProperty("Response").getValue())
         
         def testStepName = testStep.name
         def rawResponse = testStep.getProperty("Response").getValue()
@@ -237,10 +289,18 @@ class evalRequests {
         log.debug("\r\n")
         log.debug(testStepName + ":: " + rawResponse)
         
-        return captureURL.printURL(url, testStepName, null, null);
+        log.debug(testStepName + "Trying to capture response in a different file")
+        errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
+        errorData += captureURL.printURL(url, testStepName, null, null);
+        
+        return errorData;
     }
     
     String createEnvelopeIndicium(def testStep, String nameSpace){
+        
+        def grUtils = new GroovyUtils(context);
+        def errorData;
+        responseHolder = grUtils.getXmlHolder(testStep.getProperty("Response").getValue())
         
         def testStepName = testStep.name
         def rawResponse = testStep.getProperty("Response").getValue()
@@ -258,10 +318,18 @@ class evalRequests {
         log.debug("\r\n")
         log.debug(testStepName + ":: " + rawResponse)
         
-        return captureURL.printURL(url, testStepName, null, null);
+        log.debug(testStepName + "Trying to capture response in a different file")
+        errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
+        errorData += captureURL.printURL(url, testStepName, null, null);
+        
+        return errorData;
     }
     
      String createMailingLabelIndicia(def testStep, String nameSpace){
+        
+        def grUtils = new GroovyUtils(context);
+        def errorData;
+        responseHolder = grUtils.getXmlHolder(testStep.getProperty("Response").getValue())
         
         def testStepName = testStep.name
         def rawResponse = testStep.getProperty("Response").getValue()
@@ -279,7 +347,11 @@ class evalRequests {
         log.debug("\r\n")
         log.debug(testStepName + ":: " + rawResponse)
         
-        return captureURL.printURL(url, testStepName, null, null);
+        log.debug(testStepName + "Trying to capture response in a different file")
+        errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
+        errorData += captureURL.printURL(url, testStepName, null, null);
+        
+        return errorData;
     }
 }
 
