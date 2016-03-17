@@ -34,12 +34,12 @@ import soapUIScripts.*
  *
  * @author Diganth Aswath <diganth2004@gmail.com>
  * @description This class contains code that parses executed requests and 
- *              extracts data, logs them, prints URLs. if adding new functionality,
+ *              extracts data, logs them, prints URLs. if adding new webmethods to test,
  *              only this class needs to be changed.
  */
 class evalRequests {
     def context, util, log;
-    def captureURL, captureImageData, responseHolder, requestHolder, captureResponses;
+    def captureURL, captureImageData, responseHolder, requestHolder, captureResponses, captureType = "null";
 
     evalRequests(def util, def context, def log){
         this.util = util
@@ -49,8 +49,20 @@ class evalRequests {
         captureImageData = new captureImageData (util, log)
         captureResponses = new captureResponses (util, log)
     }
+    
+    evalRequests(def util, def context, def log, def captureType){
+        this.util = util
+        this.context = context
+        this.log = log
+        this.captureType = captureType
+        captureURL = new captureURL (util, log)
+        captureImageData = new captureImageData (util, log)
+        captureResponses = new captureResponses (util, log)
+    }
+    
     String testCaseIterator(){
         def testSteps = util.testStepsList();
+        def appType;
         String[] nameSpaceURL = null;
         String error = null;
         testSteps.each {
@@ -66,7 +78,7 @@ class evalRequests {
                 // Reading Raw request to extract Namespace to use.
                 if ((rawRequest != null) && (response.contains("faultstring") == false)){
                    nameSpaceURL = rawRequest.findAll('https?://[^\\s<>"]+|www\\.[^\\s<>"]+')
-                
+                         
                     if (rawRequest.contains("CreateIndicium")){
                         error = createIndicium(it,nameSpaceURL[1])
                         log.info(it.name + ":: Response returned -- " + error)
@@ -78,7 +90,7 @@ class evalRequests {
                     else if (rawRequest.contains("RegisterAccount")){
                         error = registration(it.name, nameSpaceURL[1])
                     }
-                    else if (rawRequest.contains("PurchasePostage")){
+                    else if (rawRequest.contains("PurchasePostage") && nameSpaceURL[1].contains("swsim")){
                         error = purchasePostage(it.name,nameSpaceURL[1])
                     }
                     else if (rawRequest.contains("GetAccountInfo")){
@@ -101,6 +113,20 @@ class evalRequests {
                         error = createMailingLabelIndicia(it, nameSpaceURL[1])
                         log.info(it.name + ":: Response returned -- " + error)
                     }
+                    else if (rawRequest.contains("GetRates") || rawRequest.contains("GetCodewordQuestions") || rawRequest.contains("EnumCostCodes") 
+                            || rawRequest.contains("GetPurchasePostage") ){
+                        error = miscellaneousWebMethods(it, nameSpaceURL[1])
+                        log.info(it.name + ":: Response returned -- " + error)
+                    }
+                    else if (rawRequest.contains("RegisterUser") || rawRequest.contains("RegisterUserAndWait") || rawRequest.contains("ClearMessages")
+                            || rawRequest.contains("AuthenticatePostalUser") || rawRequest.contains("GetCustomerInfo") 
+                            || rawRequest.contains("GetBillingInfo") || rawRequest.contains("PurchasePostage") || rawRequest.contains("EnumPurchaseLog")
+                            || rawRequest.contains("IssuePostage") || rawRequest.contains("IssueShippingLabel") || rawRequest.contains("AcceptInsuranceEULA")
+                            || rawRequest.contains("PurchaseInsurance") || rawRequest.contains("RefundInsurance") || rawRequest.contains("AddReferenceCodes")
+                            || rawRequest.contains("EnumReferenceCodes") || rawRequest.contains("CleanseAddress")){
+                            error = miscellaneousWebMethods(it, nameSpaceURL[1])
+                            log.info(it.name + ":: Response returned -- " + error)
+                    }
                     else{
                         error = "Unable to find any valid acceptable types in request.";
                         log.error("Unable to find any valid acceptable types in request.");
@@ -119,6 +145,7 @@ class evalRequests {
         def grUtils = new GroovyUtils(context);
         
         def errorData;
+        SoapUI.log "In Create Indicium....";
         
         requestHolder = grUtils.getXmlHolder(testStep.getProperty("RawRequest").getValue());
         requestHolder.declareNamespace("ns1", nameSpace);
@@ -148,15 +175,17 @@ class evalRequests {
         log.debug(testStepName + ":: *********** Response **************** :")
         log.debug(testStepName + ":: " + responseHolder.getPrettyXml())
         
-        log.debug(testStepName + "Trying to capture response in a different file")
-        errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, serviceType, layout);
         
-        if (returnImageData == "true"){
-            errorData += captureImageData.base64decoder(base64Data, testStepName, serviceType, layout, imageType);
-            
+        if (captureType.toString().toLowerCase() == "response"){
+            log.debug(testStepName + ":: Trying to capture response in a different file")
+            errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, serviceType, layout);
         }
-        else
-            errorData += captureURL.printURL(url, testStepName, serviceType, layout);
+        
+        if ((captureType.toString().toLowerCase() == "null" || captureType.toString().toLowerCase() == "url") && returnImageData == "true"){
+            errorData = captureImageData.base64decoder(base64Data, testStepName, serviceType, layout, imageType);    
+        }
+        else if (captureType.toString().toLowerCase() == "null" || captureType.toString().toLowerCase() == "url")
+            errorData = captureURL.printURL(url, testStepName, serviceType, layout);
         
         return errorData;
     }
@@ -177,11 +206,13 @@ class evalRequests {
         log.debug(testStepName + ":: *********** Response **************** :")
         log.debug(testStepName + ":: " + responseHolder.getPrettyXml())
         
-        log.debug(testStepName + "Trying to capture response in a different file")
-        errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
-        
-        errorData += captureURL.printURL(url, testStepName, null, null);
-        
+        if (captureType.toString().toLowerCase() == "response"){
+            log.debug(testStepName + ":: Trying to capture response in a different file")
+            errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
+        }
+        else if ((captureType.toString().toLowerCase() == "null" || captureType.toString().toLowerCase() == "url")){
+            errorData = captureURL.printURL(url, testStepName, null, null);
+        }
         return errorData;
          
     }
@@ -200,9 +231,10 @@ class evalRequests {
             log.info ("Registration SUCCESS :: User " + userName + " and User ID "+ userID)
         }
         
-        return NULL;
+        return "NULL";
     }
     String purchasePostage(def testStepName, String nameSpace){
+        
         def purchaseStatus = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:PurchaseStatus[1]}')
         def transactionID = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:TransactionID[1]}')
         def availablePostage = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:PostageBalance[1]/ns1:AvailablePostage[1]}')
@@ -218,9 +250,8 @@ class evalRequests {
             log.error ("Purchase Postage REJECTED :: Transaction ID " + transactionID + " :: Available Postage " + availablePostage + ":: Control Total " + controlTotal)
         }
         
-        return NULL;
-    }
-        
+        return "NULL";
+    }        
     String getAccountInfo(def testStep, String nameSpace){
         
         def testStepName = testStep.name
@@ -242,12 +273,12 @@ class evalRequests {
         log.info ("AcountInfo :: Control Total == " + controlTotal)
         log.info ("AcountInfo :: Max. Postage Balance == " + maxPostageBal)
         
-        log.debug(testStepName + "Trying to capture response in a different file")
-        errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
-        
+        if (captureType.toString().toLowerCase() == "response"){
+            log.debug(testStepName + "Trying to capture response in a different file")
+            errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
+        }
         return errorData;
     }
-    
     String  createUnfundedIndicium( def testStep, String nameSpace){
         
         def testStepName = testStep.name
@@ -261,13 +292,16 @@ class evalRequests {
         log.info (testStepName + ":: StampsTxTD : " + stampsTxID)
         log.info (testStepName + ":: Tracking Number : " +tracking)
         
-        log.debug(testStepName + "Trying to capture response in a different file")
-        errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
-        errorData += captureURL.printURL(url, testStepName, null, null);
-        
+        if (captureType.toString().toLowerCase() == "response"){
+            log.debug(testStepName + ":: Trying to capture response in a different file")
+            errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
+        }
+        else if ((captureType.toString().toLowerCase() == "null" || captureType.toString().toLowerCase() == "url")){
+            errorData = captureURL.printURL(url, testStepName, null, null);
+        }
+      
         return errorData;
     }
-
     String createNetStampsIndicia(def testStep, String nameSpace){
         
         def grUtils = new GroovyUtils(context);
@@ -289,13 +323,15 @@ class evalRequests {
         log.debug("\r\n")
         log.debug(testStepName + ":: " + rawResponse)
         
-        log.debug(testStepName + "Trying to capture response in a different file")
-        errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
-        errorData += captureURL.printURL(url, testStepName, null, null);
-        
+        if (captureType.toString().toLowerCase() == "response"){
+            log.debug(testStepName + ":: Trying to capture response in a different file")
+            errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
+        }
+        else if ((captureType.toString().toLowerCase() == "null" || captureType.toString().toLowerCase() == "url")){
+            errorData = captureURL.printURL(url, testStepName, null, null);
+        }
         return errorData;
-    }
-    
+    }  
     String createEnvelopeIndicium(def testStep, String nameSpace){
         
         def grUtils = new GroovyUtils(context);
@@ -318,14 +354,16 @@ class evalRequests {
         log.debug("\r\n")
         log.debug(testStepName + ":: " + rawResponse)
         
-        log.debug(testStepName + "Trying to capture response in a different file")
-        errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
-        errorData += captureURL.printURL(url, testStepName, null, null);
-        
+        if (captureType.toString().toLowerCase() == "response"){
+            log.debug(testStepName + ":: Trying to capture response in a different file")
+            errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
+        }
+        else if ((captureType.toString().toLowerCase() == "null" || captureType.toString().toLowerCase() == "url")){
+            errorData = captureURL.printURL(url, testStepName, null, null);
+        }
         return errorData;
-    }
-    
-     String createMailingLabelIndicia(def testStep, String nameSpace){
+    } 
+    String createMailingLabelIndicia(def testStep, String nameSpace){
         
         def grUtils = new GroovyUtils(context);
         def errorData;
@@ -347,11 +385,29 @@ class evalRequests {
         log.debug("\r\n")
         log.debug(testStepName + ":: " + rawResponse)
         
-        log.debug(testStepName + "Trying to capture response in a different file")
-        errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
-        errorData += captureURL.printURL(url, testStepName, null, null);
+        if (captureType.toString().toLowerCase() == "response"){
+            log.debug(testStepName + ":: Trying to capture response in a different file")
+            errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
+        }
+        else if ((captureType.toString().toLowerCase() == "null" || captureType.toString().toLowerCase() == "url")){
+            errorData = captureURL.printURL(url, testStepName, null, null);
+        }
+        return errorData;
+    }   
+    String miscellaneousWebMethods (def testStep, String nameSpace){
+        
+        def grUtils = new GroovyUtils(context);
+        def errorData;
+        responseHolder = grUtils.getXmlHolder(testStep.getProperty("Response").getValue())
+        
+        def testStepName = testStep.name
+        if (captureType.toString().toLowerCase() == "response"){
+            log.debug(testStepName + ":: Trying to capture response in a different file")
+            errorData = captureResponses.saveResponse(responseHolder.getPrettyXml(), testStepName, null, null);
+        }
         
         return errorData;
     }
+   
 }
 

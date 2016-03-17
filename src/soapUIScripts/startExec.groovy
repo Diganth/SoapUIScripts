@@ -36,15 +36,33 @@ import soapUIScripts.utility
  */
 class startExec {
         
-    def context, util, log, testRunner, evaluator;
+    def context, util, log, testRunner, evaluator, assertor, captureType;
     
     startExec(def context, def testRunner, def propertyName){
         this.context = context
         this.testRunner = testRunner
-        util = new utility(context, propertyName); 
+        util = new utility(context, testRunner, propertyName); 
         log = new logger(util);
-        log.createLogFile();
+        if (propertyName == "Project")
+            log.createLogFile("Project");
+        else 
+            log.createLogFile(propertyName);
         evaluator = new evalRequests(util, context, log);
+        assertor = new assertions(util, context, log) 
+    }
+    
+    startExec(def context, def testRunner, def propertyName, def captureType){
+        this.context = context
+        this.testRunner = testRunner
+        this.captureType = captureType;
+        util = new utility(context, testRunner, propertyName); 
+        log = new logger(util);
+        if (propertyName == "Project")
+            log.createLogFile("Project");
+        else 
+            log.createLogFile(propertyName);
+        evaluator = new evalRequests(util, context, log, captureType);
+        assertor = new assertions(util, context, log);
     }
         
      def startLoop(){
@@ -87,7 +105,7 @@ class startExec {
         }
     }
     
-    def executeOnce(){
+    def saveData(){
         String error = null;
         SoapUI.log ("SoapUIScript.jar::In Execute Once()")
         error = evaluator.testCaseIterator();

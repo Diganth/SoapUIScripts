@@ -85,6 +85,8 @@ class captureURL {
     // Function that controls the logic of iterating through the testSteps to obtain
     // URL from the response.
     public String printURL (def url, def testStepName, def serviceType, def layout) {
+        
+        SoapUI.log "In CaptureURL.PrintURL"
         String errorFlag = null;
         this.url = url;
         this.testStepName = testStepName;

@@ -40,35 +40,43 @@ class logger {
     {
         this.util = util;
     }
-    def createLogFile(){
-        dirName = util.dirName();
+    def createLogFile(def propertyLocation){
+        dirName = util.dirName(propertyLocation);
         logDir = new File(dirName)
-        if(!logDir.isDirectory() && util.readProperty("LogFileLocation").toString()== "0") //checking if folder exists
+        if(!logDir.isDirectory() && propertyLocation != "Project" && util.readProperty("LogFileLocation").toString()== "0")//checking if folder exists
         {
             SoapUI.log "SoapUIScript.jar::Creating Directory :" + dirName + "as it does not exist"
             logDir.mkdirs()
             logFile = new File( logDir, "log.log")
             util.writeProperty("LogFileLocation", dirName)
         }
-        else {
+        else if (!logDir.isDirectory() && propertyLocation == "Project" && util.readTestCaseProperty("LogFileLocation").toString() == "0")
+        {
+            SoapUI.log "SoapUIScript.jar::Creating Directory :" + dirName + "as it does not exist"
+            logDir.mkdirs()
+            logFile = new File( logDir, "log.log")
+            util.writeTestCaseProperty("LogFileLocation", dirName)
+        }
+        else if (propertyLocation != "Project"){
             SoapUI.log "SoapUIScript.jar::Log Directory and File already exist at :" + dirName
             logDir = new File(util.readProperty("LogFileLocation"))
-            logFile = new File( logDir, "log.log")
-            
+            logFile = new File( logDir, "log.log")  
+        }
+        else {
+           SoapUI.log "SoapUIScript.jar::Log Directory and File already exist at :" + dirName
+           logDir = new File(util.readTestCaseProperty("LogFileLocation"))
+           logFile = new File( logDir, "log.log") 
         }
     }
-    def info(String comment)
-    {
+    def info(String comment){
         logFile << "${util.today()}:INFO:${comment}" << "\r\n"
         //captureLogs ("soapUI log");
     }
-    def error(String error)
-    {
+    def error(String error){
         logFile << "${util.today()}:ERROR:${error}" << "\r\n"
         //captureLogs ("error log");
     }
-    def debug(String debug)
-    {
+    def debug(String debug){
         logFile << "${util.today()}:DEBUG:${debug}" <<"\r\n"
         //captureLogs ("http log");
     }
