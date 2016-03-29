@@ -41,15 +41,22 @@ class captureResponses {
     
     //Function to create file with TestStep name depending on imagetype
     def file_create (response){
-        def fileName;
+        def fileName, logFileLocation;
+        def propertyLocation = util.propName;
+        if (propertyLocation != 'Project'){
+            logFileLocation = util.readProperty("LogFileLocation");
+        }
+        else{
+            logFileLocation = util.readTestCaseProperty("LogFileLocation");
+        }
         if (serviceType == null)
-            fileName = util.readProperty("LogFileLocation")+testStepName+"_"+layout+".txt";
+            fileName = logFileLocation+testStepName+"_"+layout+".txt";
         else if (serviceType == null && layout == null)
-            fileName = util.readProperty("LogFileLocation")+testStepName+"_"+util.todayTime()+".txt";
+            fileName = logFileLocation+testStepName+"_"+util.todayTime()+".txt";
         else if (layout == null)
-            fileName = util.readProperty("LogFileLocation")+testStepName+"_"+serviceType+".txt";
+            fileName = logFileLocation+testStepName+"_"+serviceType+".txt";
         else
-            fileName = util.readProperty("LogFileLocation")+testStepName+".txt";
+            fileName = logFileLocation+testStepName+".txt";
         // Write output to file created
         writetoFile (fileName, response)
     }

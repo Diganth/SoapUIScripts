@@ -30,7 +30,7 @@ import soapUIScripts.utility
  * @author Diganth Aswath <diganth2004@gmail.com>
  */
 class logger {
-    def dirName;
+    def dirName, destDirName;
     def util;
     //def util, myTestCase, myTestCaseName, myTestSuiteName, dirName;
     File logDir, logFile;

@@ -70,13 +70,13 @@ class evalRequests {
             if (it instanceof com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep){
                 
                 def rawRequest = it.getProperty("RawRequest").getValue()
-                log.debug(it.name + ":: *********** Raw Request **************** ")
+                /*log.debug(it.name + ":: *********** Raw Request **************** ")
                 log.debug("\r\n")
-                log.debug(it.name + ":: " + rawRequest)               
+                log.debug(it.name + ":: " + rawRequest)   */            
                 def response = it.getProperty("Response").getValue()
                              
                 // Reading Raw request to extract Namespace to use.
-                if ((rawRequest != null) && (response.contains("faultstring") == false)){
+                if ((rawRequest != null) && !(util.isFaultString(response))){
                    nameSpaceURL = rawRequest.findAll('https?://[^\\s<>"]+|www\\.[^\\s<>"]+')
                          
                     if (rawRequest.contains("CreateIndicium")){
@@ -133,7 +133,7 @@ class evalRequests {
                     }
                 }
                 else{
-                    error = context.expand ('${'+it.name+'#Response#//faultstring[1]}');
+                    error = context.expand ('${'+it.name+'#Response#//*:faultstring[1]}');
                 }
             }
         }
@@ -172,8 +172,8 @@ class evalRequests {
         
         responseHolder.removeDomNodes('//ns1:CreateIndiciumResponse[1]/ns1:ImageData[1]/ns1:base64Binary')
         responseHolder.updateProperty()
-        log.debug(testStepName + ":: *********** Response **************** :")
-        log.debug(testStepName + ":: " + responseHolder.getPrettyXml())
+        /*log.debug(testStepName + ":: *********** Response **************** :")
+        log.debug(testStepName + ":: " + responseHolder.getPrettyXml())*/
         
         
         if (captureType.toString().toLowerCase() == "response"){
@@ -203,8 +203,8 @@ class evalRequests {
         log.info(testStepName + ":: Response -- ScanFormID : " + scanFormID)
         log.info(testStepName + ":: Response -- ScanForm URL : " + url)
 
-        log.debug(testStepName + ":: *********** Response **************** :")
-        log.debug(testStepName + ":: " + responseHolder.getPrettyXml())
+       /* log.debug(testStepName + ":: *********** Response **************** :")
+        log.debug(testStepName + ":: " + responseHolder.getPrettyXml())*/
         
         if (captureType.toString().toLowerCase() == "response"){
             log.debug(testStepName + ":: Trying to capture response in a different file")
@@ -319,9 +319,9 @@ class evalRequests {
         log.info(testStepName + ":: Image Type : " + imageType)
         log.info(testStepName + ":: StampsTxTD : " + stampsTxID)
         log.info(testStepName + ":: NetStampsStatus : " + netstampsStatus)
-        log.debug(testStepName + ":: *********** Raw Response **************** ")
+        /*log.debug(testStepName + ":: *********** Raw Response **************** ")
         log.debug("\r\n")
-        log.debug(testStepName + ":: " + rawResponse)
+        log.debug(testStepName + ":: " + rawResponse)*/
         
         if (captureType.toString().toLowerCase() == "response"){
             log.debug(testStepName + ":: Trying to capture response in a different file")
@@ -350,9 +350,9 @@ class evalRequests {
         
         log.info(testStepName + ":: StampsTxTD : " + stampsTxID)
         log.info(testStepName + ":: TrackingNumber : " + trackingNumber)
-        log.debug(testStepName + ":: *********** Raw Response **************** ")
+        /*log.debug(testStepName + ":: *********** Raw Response **************** ")
         log.debug("\r\n")
-        log.debug(testStepName + ":: " + rawResponse)
+        log.debug(testStepName + ":: " + rawResponse)*/
         
         if (captureType.toString().toLowerCase() == "response"){
             log.debug(testStepName + ":: Trying to capture response in a different file")
@@ -381,9 +381,9 @@ class evalRequests {
         
         log.info(testStepName + ":: StampsTxTD : " + stampsTxID)
         log.info(testStepName + ":: TrackingNumber : " + confirmationNumbers)
-        log.debug(testStepName + ":: *********** Raw Response **************** ")
+        /*log.debug(testStepName + ":: *********** Raw Response **************** ")
         log.debug("\r\n")
-        log.debug(testStepName + ":: " + rawResponse)
+        log.debug(testStepName + ":: " + rawResponse)*/
         
         if (captureType.toString().toLowerCase() == "response"){
             log.debug(testStepName + ":: Trying to capture response in a different file")

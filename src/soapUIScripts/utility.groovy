@@ -60,6 +60,10 @@ protected class utility {
         //today = new Date();
         return today.getTimeString().split(':').join('_');
     }
+    //Returns testStep by name
+    def testStep(String testStepName){
+        return context.testCase.getTestStepByName(testStepName);
+    }
     //Returns current testcase
     def testCase(){
         return context.testCase;
@@ -83,7 +87,6 @@ protected class utility {
         else  
             return this.readProperty("ResultFilePath") + testSuite().name + '_' + testCase().name + '_' + todayDate() + '_' + todayTime() + '/';
     }
-    //Returns the 
     //Returns the testStep with specified Property Name
     def propertyTestStep(){
         if(context.testCase.getTestStepByName(propName) == null)
@@ -104,6 +107,19 @@ protected class utility {
     def writeProperty(def property, def value){
         this.propertyTestStep().setPropertyValue(property, value);
     }
+     //Reads from TestStep property
+    def readTestStepProperty(def testStepName, def property){
+        if (this.testStep(testStepName).getPropertyValue(property) == null){
+            SoapUI.log "SoapUIScript.jar::Check TestSuite Property Name. Supplied property name does not match " + property;
+            return -1;
+        }
+        else
+            return this.testStep(testStepName).getPropertyValue(property);
+    }
+    //Write to TestStep property
+    def writeTestStepProperty(def testStepName, def property, def value){
+        this.testStep(testStepName).setPropertyValue(property, value);
+    } 
     //Reads from TestSuite property
     def readTestSuiteProperty(def property){
         if (this.testSuite().getPropertyValue(property) == null){
@@ -143,6 +159,20 @@ protected class utility {
     def writeProjectProperty(def property, def value){
         this.project().setPropertyValue(property, value);
     }
+    //Check if DataSource Element exists
+    Boolean isAvailableInDataSource(def DataSourceName, def property){
+        def ds = testRunner.testCase.testSteps[DataSourceName];
+        def hashmap = ds.getProperties();
+        Boolean isPresent = false;
+        Iterator it = hashmap.entrySet().iterator();
+        while (it.hasNext()){
+            Map.Entry element = (Map.Entry)it.next();
+            if (property  == element.getKey()){
+                isPresent = true;
+            }
+        }
+        return isPresent;
+    }
     //Connect to SQL DB
     def connectToDB(String dbServerName, String dbName){
         com.eviware.soapui.support.GroovyUtils.registerJdbcDriver("com.microsoft.sqlserver.jdbc.SQLServerDriver")
@@ -169,16 +199,11 @@ protected class utility {
             if (rowCount.size() >= 1){
                 queryResult = sqlInstance.firstRow(SQLQuery);
             }
-            else 
-            {
-                queryResult = "NoRows";
-            }
             closeDB(sqlInstance);
         }
         catch (Exception e){
             SoapUI.log "SoapUIScript.jar::Unable to get row count for SQL Query. Error message : " + e.message;
-        }
-        
+        } 
         return queryResult;
     } 
     //Close Opened DB Connection
@@ -198,7 +223,6 @@ protected class utility {
         else{
             xmlHolder = null;
         }
-        
         return xmlHolder;
     }
     //Read Single Node Value
@@ -212,7 +236,6 @@ protected class utility {
         else {
             nodeVal = null;
         }
-
         return nodeVal;
     }
     //Node Count
@@ -237,14 +260,43 @@ protected class utility {
             dFormat = format;
             
         DecimalFormat df = new DecimalFormat(dFormat);
-	if (text.length()!=0){
-            Double tempVar = text.toDouble();
-            String convVar = df.format(tempVar);
-            return tempVar
+	if (text != null){
+            if (text.length() > 0){
+                Double tempVar = text.toDouble();
+                String convVar = df.format(tempVar);
+                return convVar.toDouble();
+            }
+            else{
+                return 0.00;
+            }
 	}
 	else{
-            return "0"
+            return 0.00;
 	}	
+    }
+    //Check Authenticator to determine if 'SAS' user.
+    Boolean isSASUser(String authenticator){
+        String[] authArray = new String[25];
+        authArray = authenticator.split("&");
+        boolean isSASUser = false;
+        
+        for (String s:authArray){
+            if (s.contains("reseller")){
+                String[] tempArray = new String[2];
+                tempArray = s.split("=");
+                if (tempArray[1] != "0")
+                    isSASUser = true;
+            }
+        }
+        return isSASUser;
+    }
+    //Check Response to check if contains faultString
+    Boolean isFaultString(String soapData){
+        boolean isFaultString = false;
+        if (soapData.contains("faultstring") == true){
+            isFaultString = true;
+        }
+        return isFaultString;
     }
 }
 
