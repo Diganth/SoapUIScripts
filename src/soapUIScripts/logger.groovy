@@ -33,7 +33,7 @@ class logger {
     def dirName, destDirName;
     def util;
     //def util, myTestCase, myTestCaseName, myTestSuiteName, dirName;
-    File logDir, logFile;
+    File logFile, resultFile;
 
     //Initialize Log file
     logger (utility util)
@@ -42,31 +42,43 @@ class logger {
     }
     def createLogFile(def propertyLocation){
         dirName = util.dirName(propertyLocation);
-        logDir = new File(dirName)
-        if(!logDir.isDirectory() && propertyLocation != "Project" && util.readProperty("LogFileLocation").toString()== "0")//checking if folder exists
+        logFile = fileCreator(propertyLocation, dirName, "log.log");
+    }
+    def createResultFile(def propertyLocation){
+        dirName = util.dirName(propertyLocation);
+        resultFile = fileCreator(propertyLocation, dirName, "DataSink.txt");
+    }
+          
+    File fileCreator(def propertyLocation, def directoryName, def fileName){
+        File directoryObj, fileObj;   
+        directoryObj = new File(dirName);
+
+        if(!directoryObj.isDirectory() && propertyLocation != "Project" && util.readProperty("LogFileLocation").toString()== "0")//checking if folder exists
         {
-            SoapUI.log "SoapUIScript.jar::Creating Directory :" + dirName + "as it does not exist"
-            logDir.mkdirs()
-            logFile = new File( logDir, "log.log")
-            util.writeProperty("LogFileLocation", dirName)
+            SoapUI.log "SoapUIScript.jar::Creating Directory :" + directoryName + "as it does not exist"
+            directory.mkdirs()
+            fileObj = new File( logDir, fileName)
+            util.writeProperty("LogFileLocation", directoryName)
         }
-        else if (!logDir.isDirectory() && propertyLocation == "Project" && util.readTestCaseProperty("LogFileLocation").toString() == "0")
+        else if (!directoryObj.isDirectory() && propertyLocation == "Project" && util.readTestCaseProperty("LogFileLocation").toString() == "0")
         {
-            SoapUI.log "SoapUIScript.jar::Creating Directory :" + dirName + "as it does not exist"
-            logDir.mkdirs()
-            logFile = new File( logDir, "log.log")
-            util.writeTestCaseProperty("LogFileLocation", dirName)
+            SoapUI.log "SoapUIScript.jar::Creating Directory :" + directoryName + "as it does not exist"
+            directoryObj.mkdirs()
+            fileObj = new File( directoryObj, fileName)
+            util.writeTestCaseProperty("LogFileLocation", directoryName)
         }
         else if (propertyLocation != "Project"){
-            SoapUI.log "SoapUIScript.jar::Log Directory and File already exist at :" + dirName
-            logDir = new File(util.readProperty("LogFileLocation"))
-            logFile = new File( logDir, "log.log")  
+            SoapUI.log "SoapUIScript.jar::Log Directory and File already exist at :" + directoryName
+            directoryObj = new File(util.readProperty("LogFileLocation"))
+            fileObj = new File( directoryObj, fileName)  
         }
         else {
-           SoapUI.log "SoapUIScript.jar::Log Directory and File already exist at :" + dirName
-           logDir = new File(util.readTestCaseProperty("LogFileLocation"))
-           logFile = new File( logDir, "log.log") 
+           SoapUI.log "SoapUIScript.jar::Log Directory and File already exist at :" + directoryName
+           directoryObj = new File(util.readTestCaseProperty("LogFileLocation"))
+           fileObj = new File( directoryObj, fileName) 
         }
+        
+        return fileObj;
     }
     def info(String comment){
         logFile << "${util.today()}:INFO:${comment}" << "\r\n"
@@ -95,5 +107,9 @@ class logger {
                 logArea.clear();
             }
         }
+    }
+    //Save Data in DataSink file
+    def results (def data){
+        resultFile << data << "\r\n";
     }
 }

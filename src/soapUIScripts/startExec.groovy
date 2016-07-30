@@ -43,10 +43,15 @@ class startExec {
         this.testRunner = testRunner
         util = new utility(context, testRunner, propertyName); 
         log = new logger(util);
-        if (propertyName == "Project")
+        if (propertyName == "Project"){
             log.createLogFile("Project");
-        else 
+            log.createResultFile("Project");
+        }
+        else {
             log.createLogFile(propertyName);
+            log.createResultFile(propertyName);
+        }
+        
         evaluator = new evalRequests(util, context, log);
         dbassertor = new DBAssertions(util, context, log);
         fsassertor = new FSAssertions(util, context, log);
@@ -59,10 +64,14 @@ class startExec {
         this.captureType = captureType;
         util = new utility(context, testRunner, propertyName); 
         log = new logger(util);
-        if (propertyName == "Project")
+            if (propertyName == "Project"){
             log.createLogFile("Project");
-        else 
+            log.createResultFile("Project");
+        }
+        else {
             log.createLogFile(propertyName);
+            log.createResultFile(propertyName);
+        }
         evaluator = new evalRequests(util, context, log, captureType);
         dbassertor = new DBAssertions(util, context, log);
         fsassertor = new FSAssertions(util, context, log);
@@ -113,6 +122,33 @@ class startExec {
         SoapUI.log ("SoapUIScript.jar::In SaveData()")
         error = evaluator.testCaseIterator();
         return error;
+    }
+    
+    //Captures DATASink Data.
+    def captureDataSink (String dataSinkName, String dataType){
+        String finalData = null;
+        StringBuilder propertyData = new StringBuilder();
+        def dataSinkData = util.dsProperty(dataSinkName, "data");
+        if (dataSinkData != -1)
+        {
+            for (int i = 0; i < dataSinkData.size(); i++){
+                if (dataType.toLowerCase() == "header" && util.readTestCaseProperty("Header") != 1){
+                    util.writeTestCaseProperty("Header", "1");
+                    propertyData.append(dataSinkData[i].getName());
+                    propertyData.append(',');
+                }
+                else if (dataType.toLowerCase() == "content") {
+                    propertyData.append(dataSinkData[i].getValue());
+                    propertyData.append(',');
+                }
+            }
+            finalData = propertyData.substring(0,propertyData.length()-1);
+            log.results(finalData);
+        }
+        else {
+            SoapUI.log "Specified DataSink either does not exist or has no properties defined. Check DataSink: " + dataSinkName; 
+        }
+        
     }
 }
 

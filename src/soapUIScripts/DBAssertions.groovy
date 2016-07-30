@@ -65,6 +65,7 @@ class DBAssertions {
             else if (response.contains("CreateEnvelopeIndiciumResponse")){
                 responseMailClass = util.readXMLNodeValue(response, '//ns1:CreateEnvelopeIndiciumResponse[1]/ns1:Rate[1]/ns1:ServiceType[1]');
             }
+            
             if( (responseMailClass == "US-FC" && dbData == "FIRST_CLASS") 
                 || (responseMailClass == "US-PM" && dbData == "PRIORITY")
                 || (responseMailClass == "US-XM" && dbData == "EXPRESS")
@@ -96,10 +97,11 @@ class DBAssertions {
     }
     
     def assertPostageAmount(def request, def response, def dbData){
-        def assertionResult = null, addOnValue = null, addOnNodeCount, responseAmount;
-        def addOnNodeCountTag, addOnValueTag, responseAmountTag;
+        def assertionResult = null, addOnValue = null, addOnNodeCount, responseAmount, requestAmount;
+        def addOnNodeCountTag = null, addOnValueTag = null, responseAmountTag = null, requestAmountTag = null;
         def addOnVersionText = util.readTestCaseProperty("AddOnVersionText");
         def testCaseName = util.readTestCaseProperty("CurrentTestName");
+        Double totalPostage_Response, totalPostage_DB, totalPostage_Request;
          
         log.debug("$testCaseName:: In DBAssertions.assertPostageAmount()...");
         
@@ -114,25 +116,45 @@ class DBAssertions {
                 responseAmountTag = "//ns1:CreateEnvelopeIndiciumResponse[1]/ns1:Rate[1]/ns1:Amount[1]";
                 addOnValueTag = "//ns1:CreateEnvelopeIndiciumResponse[1]/ns1:Rate[1]/ns1:AddOns[1]/ns1:$addOnVersionText[%d]/ns1:Amount[1]";
             }
+            else if (request.contains("GetAccountInfoResponse") && response.contains("CreateNetStampsIndiciaResponse")){
+                requestAmountTag = "//ns1:GetAccountInfoResponse[1]/ns1:AccountInfo[1]/ns1:PostageBalance[1]/ns1:AvailablePostage[1]";
+                responseAmountTag = "//ns1:CreateNetStampsIndiciaResponse[1]/ns1:PostageBalance[1]/ns1:AvailablePostage[1]";
+                addOnNodeCountTag = null;
+                addOnValueTag = null;
+            }
             
-            addOnNodeCount = util.countXMLNode(request, addOnNodeCountTag);  
+            requestAmount = util.readXMLNodeValue(request, requestAmountTag);
+            addOnNodeCount = util.countXMLNode(request, addOnNodeCountTag);     
             responseAmount = util.readXMLNodeValue(response, responseAmountTag);
-            log.debug("AddOnCount: $addOnNodeCount");
-            log.debug("ResponseAmt: $responseAmount");
             
-            Double totalPostage_Response = util.convertToDouble(responseAmount, "#.00");
-            Double totalPostage_DB = util.convertToDouble(dbData.toString(), "#.00");
+            log.debug("$testCaseName:: RequestAmount  : $requestAmount");
+            log.debug("$testCaseName:: AddOnNode Count  : $addOnNodeCount");
+            log.debug("$testCaseName:: ResponseAmount  : $responseAmount");
+            
+            totalPostage_Request = util.convertToDouble(requestAmount, "#.000");
+            totalPostage_Response  = util.convertToDouble(responseAmount, "#.000");
+            totalPostage_DB = util.convertToDouble(dbData.toString(), "#.000");
+            
+            log.debug("$testCaseName:: RequestAmount  : $totalPostage_Request");
+            log.debug("$testCaseName:: ResponseAmount  : $totalPostage_Response");
+            log.debug("$testCaseName:: DBAmount  : $totalPostage_DB");
+            
             if (addOnNodeCount.toInteger() >  0) {
                 for (int i = 1; i <= addOnNodeCount; i++)
                 {
                     addOnValue = util.readXMLNodeValue(response, String.format(addOnValueTag, i));
                     log.debug("AddonValue: $addOnValue")
                     if (addOnValue != null)
-                        totalPostage_Response = totalPostage_Response + util.convertToDouble(addOnValue, "#.00");
+                        totalPostage_Response = totalPostage_Response + util.convertToDouble(addOnValue, "#.000");
                 }
             }
             
-            totalPostage_Response = util.convertToDouble(totalPostage_Response.toString(), "#.00");
+            /* Used for CreateNetStampIndicia assertion only*/
+            if (requestAmount != null) {
+                totalPostage_Response = totalPostage_Request - totalPostage_Response;
+            }
+            
+            totalPostage_Response = util.convertToDouble(totalPostage_Response.toString(), "#.000");
             if (totalPostage_Response == totalPostage_DB){
                 assertionResult = "Matched.. Response Postage - [$totalPostage_Response] matches DB Data - [$totalPostage_DB].";
             }
@@ -170,12 +192,15 @@ class DBAssertions {
             else if (response.contains("CreateMailingLabelIndiciaResponse")){
                 responseControlTotal = util.readXMLNodeValue(response, "//ns1:CreateMailingLabelIndiciaResponse[1]/ns1:PostageBalance[1]/ns1:ControlTotal[1]");
             }
+            else if (response.contains("CreateNetStampsIndiciaResponse")){
+                responseControlTotal = util.readXMLNodeValue(response, "//ns1:CreateNetStampsIndiciaResponse[1]/ns1:PostageBalance[1]/ns1:ControlTotal[1]");
+            }
             else{
                 responseControlTotal = "0.00";
             }
             Double ControlTotal_Response = util.convertToDouble(responseControlTotal, "#.00");
             log.debug("ControlTotal_Response $ControlTotal_Response");
-            Double ControlTotal_DB = util.convertToDouble(dbData_descReg.toString(), "#.00") + util.convertToDouble(dbData_ascReg.toString(), "#.00");
+            Double ControlTotal_DB = util.convertToDouble(dbData_descReg.toString(), "#.000") + util.convertToDouble(dbData_ascReg.toString(), "#.000");
             ControlTotal_DB = util.convertToDouble(ControlTotal_DB.toString(), "#.00");
             log.debug("ControlTotal_DB after converting $ControlTotal_DB");
             if (ControlTotal_Response == ControlTotal_DB){
@@ -265,6 +290,9 @@ class DBAssertions {
         }
         else if (response.contains("CreateMailingLabelIndiciaResponse")){
             assertionResult = assertSingleValue(response, dbData, "//ns1:CreateMailingLabelIndiciaResponse[1]/ns1:StampsTxId[1]");
+        }
+        else if (response.contains("CreateNetStampsIndiciaResponse")){
+            assertionResult = assertSingleValue(response, dbData, "//ns1:CreateNetStampsIndiciaResponse[1]/ns1:StampsTxId[1]");
         }
         return assertionResult;
     }

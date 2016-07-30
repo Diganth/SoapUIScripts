@@ -35,7 +35,7 @@ import soapUIScripts.*
  * @description: wrapper class to use SOAPUI groovy commands.
  */
 protected class utility {
-    def today, todayDate, todayTime, propName;
+    def today, todayDate, todayTime, propName, log;
     def context, testRunner, grUtils;
     
     protected utility(def context, def testRunner, String propName){
@@ -45,7 +45,8 @@ protected class utility {
         this.grUtils = new GroovyUtils(context);
         today = new Date();  
     }
-  
+    
+
     //Returns Today's date and time
     def today(){
         return today.toString();
@@ -110,7 +111,7 @@ protected class utility {
      //Reads from TestStep property
     def readTestStepProperty(def testStepName, def property){
         if (this.testStep(testStepName).getPropertyValue(property) == null){
-            SoapUI.log "SoapUIScript.jar::Check TestSuite Property Name. Supplied property name does not match " + property;
+            SoapUI.log "SoapUIScript.jar::Check TestStep Property Name. Supplied property name does not match " + property;
             return -1;
         }
         else
@@ -136,7 +137,7 @@ protected class utility {
     //Reads from TestCase property
     def readTestCaseProperty(def property){
         if (this.testCase().getPropertyValue(property) == null){
-            SoapUI.log "SoapUIScript.jar::Check TestSuite Property Name. Supplied property name does not match " + property;
+            SoapUI.log "SoapUIScript.jar::Check TestCase Property Name. Supplied property name does not match " + property;
             return -1;
         }
         else
@@ -159,33 +160,53 @@ protected class utility {
     def writeProjectProperty(def property, def value){
         this.project().setPropertyValue(property, value);
     }
-    //Check if DataSource Element exists
-    Boolean isAvailableInDataSource(def DataSourceName, def property){
-        def ds = testRunner.testCase.testSteps[DataSourceName];
-        def hashmap = ds.getProperties();
-        Boolean isPresent = false;
-        Iterator it = hashmap.entrySet().iterator();
-        while (it.hasNext()){
-            Map.Entry element = (Map.Entry)it.next();
-            if (property  == element.getKey()){
-                isPresent = true;
-            }
+    //Get Data/Count of properties in DataSink/DataSource
+    def dsProperty(def sourceName, def info){
+        def ds = testRunner.testCase.testSteps[sourceName];
+        def hashmap = ds.getProperties(); 
+        def returnData, result;
+        if (info.toLowerCase() == "count")
+        {   
+            returnData = hashmap.size();
         }
-        return isPresent;
+        if (info.toLowerCase() == "data")
+        {
+            int count = hashmap.size();
+            if (count != 0){
+                result = hashmap.values();
+            }
+            returnData = result;   
+        }
+        if (returnData == null && returnData.size() == 0)
+            returnData = -1;
+        return returnData;
+    }
+    //Check if DataSource Element exists
+    Boolean isAvailableInDataSource(def dataSourceName, def property){
+       Boolean isPresent = false;
+       def dataSourceData = dsProperty(dataSourceName, "data");
+       if (dataSourceData != -1)
+       {
+           for (int i=0; i<dataSourceData.size(); i++)
+           {
+               if (dataSourceData[i].getName() == property)
+                    isPresent = true;
+           }
+       }
+       return isPresent;
     }
     //Connect to SQL DB
     def connectToDB(String dbServerName, String dbName){
         com.eviware.soapui.support.GroovyUtils.registerJdbcDriver("com.microsoft.sqlserver.jdbc.SQLServerDriver")
         String connectionString = String.format("jdbc:sqlserver://%s:1433;databaseName=%s;integratedSecurity=true", dbServerName, dbName);
         def db = [url:connectionString, driver:'com.microsoft.sqlserver.jdbc.SQLServerDriver'];
-        def connectionResult
+        Sql connectionResult = null;
         try{
             connectionResult = Sql.newInstance(db.url, db.driver);
             SoapUI.log "SoapUIScript.jar::DB Connection Sucess...";
             return connectionResult;
         }
         catch(Exception e){
-            connectionResult = "DBError";
             SoapUI.log "SoapUIScript.jar::DB Connection unsuccessful. Error message : " + e.message;
             return connectionResult;
         }
@@ -194,18 +215,49 @@ protected class utility {
     def executeDBQuery(Sql sqlInstance, String SQLQuery){
         def rowCount;
         def queryResult;
-        try{
-            rowCount = sqlInstance.rows(SQLQuery);
-            if (rowCount.size() >= 1){
-                queryResult = sqlInstance.firstRow(SQLQuery);
-            }
-            closeDB(sqlInstance);
+        if (sqlInstance == null ) {
+            queryResult = null;
         }
-        catch (Exception e){
-            SoapUI.log "SoapUIScript.jar::Unable to get row count for SQL Query. Error message : " + e.message;
-        } 
+        else {
+            try{
+                rowCount = sqlInstance.rows(SQLQuery);
+                if (rowCount.size() >= 1){
+                    queryResult = sqlInstance.firstRow(SQLQuery);
+                }
+                closeDB(sqlInstance);
+            }
+            catch (Exception e){
+                SoapUI.log "SoapUIScript.jar::Unable to get row count for SQL Query. Error message : " + e.message;
+            } 
+        }
         return queryResult;
-    } 
+    }
+    //Insert into DB query
+    def insertDBQuery(Sql sqlInstance, String SQLQuery){
+        def queryResult;
+        if (sqlInstance == null) {
+            queryResult = null;
+        }
+        else {
+            try {
+                SqlInstance.execute(SQLQuery);
+                if (SqlInstance.updateCount == 1){
+                    queryResult = "Success";
+                }
+                closeDB(sqlInstance);
+            }
+            catch (Exception e){
+                SoapUI.log "SoapUIScript.jar::Unable to insert to DB. Error message : " + e.message;
+            }
+        }
+        return queryResult;
+    }
+    //Update DB Query
+    def updateDBQuery(Sql sqlInstance, String SQLQuery) {
+        def queryResult;
+        queryResult = insertDBQuery(sqlInstance, SQLQuery);
+        return queryResult;
+    }
     //Close Opened DB Connection
     void closeDB(Sql sqlInstance){
         sqlInstance.close();
@@ -231,7 +283,13 @@ protected class utility {
         def holder = createXMLHolder(data);
 
         if (holder != null){
-            nodeVal = holder.getNodeValue(nodeTag);
+            if (nodeTag != null && nodeTag.contains("Authenticator")){
+                nodeVal = holder.getNodeValue(nodeTag);
+                nodeVal = "<![CDATA[" + nodeVal + "]]>";
+            }
+            else{
+                nodeVal = holder.getNodeValue(nodeTag);
+            }
         }
         else {
             nodeVal = null;

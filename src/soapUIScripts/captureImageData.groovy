@@ -42,14 +42,46 @@ class captureImageData {
     }
     
     def file_create (String decodedImageData, imagetype){
-       def fileName = util.readProperty("LogFileLocation")+testStepName+"_"+serviceType+imagetype
+       def fileName, logFileLocation;
+       def propertyLocation = util.propName;
+       if (propertyLocation != 'Project'){
+           logFileLocation = util.readProperty("LogFileLocation");
+       }
+       else{
+           logFileLocation = util.readTestCaseProperty("LogFileLocation");
+       }
+       if (serviceType == null)
+            fileName = logFileLocation+testStepName+"_"+layout+imagetype;
+        else if (serviceType == null && layout == null)
+            fileName = logFileLocation+testStepName+"_"+util.todayTime()+imagetype;
+        else if (layout == null)
+            fileName = logFileLocation+testStepName+"_"+serviceType+imagetype;
+        else
+            fileName = logFileLocation+testStepName+imagetype;
+       
        log.debug("File Name :: " +fileName)
        //Write output to file created
        writetoFile (fileName, decodedImageData)
     }
     
     def file_create2 (byte[] decodedImageData, imagetype){
-       def fileName = util.readProperty("LogFileLocation")+testStepName+"_"+serviceType+imagetype
+       def fileName, logFileLocation;
+       def propertyLocation = util.propName;
+       if (propertyLocation != 'Project'){
+           logFileLocation = util.readProperty("LogFileLocation");
+       }
+       else{
+           logFileLocation = util.readTestCaseProperty("LogFileLocation");
+       }
+       if (serviceType == null)
+            fileName = logFileLocation+testStepName+"_"+layout+imagetype;
+        else if (serviceType == null && layout == null)
+            fileName = logFileLocation+testStepName+"_"+util.todayTime()+imagetype;
+        else if (layout == null)
+            fileName = logFileLocation+testStepName+"_"+serviceType+imagetype;
+        else
+            fileName = logFileLocation+testStepName+imagetype;
+       
        log.debug("File Name :: " +fileName)
        //Write output to file created
        writetoFile2 (fileName, decodedImageData)
