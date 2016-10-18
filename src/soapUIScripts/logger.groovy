@@ -44,23 +44,24 @@ class logger {
         dirName = util.dirName(propertyLocation);
         logFile = fileCreator(propertyLocation, dirName, "log.log");
     }
-    def createResultFile(def propertyLocation){
+    def createResultFile(def propertyLocation, def dataSinkName){
+        def fileName = dataSinkName;
         dirName = util.dirName(propertyLocation);
-        resultFile = fileCreator(propertyLocation, dirName, "DataSink.txt");
+        resultFile = fileCreator(propertyLocation, dirName, fileName);
     }
           
     File fileCreator(def propertyLocation, def directoryName, def fileName){
         File directoryObj, fileObj;   
         directoryObj = new File(dirName);
 
-        if(!directoryObj.isDirectory() && propertyLocation != "Project" && util.readProperty("LogFileLocation").toString()== "0")//checking if folder exists
+        if(!directoryObj.isDirectory() && propertyLocation != "Project" && (util.readProperty("LogFileLocation").toString()== "0" || util.readProperty("LogFileLocation").toString()== "-1"))//checking if folder exists
         {
             SoapUI.log "SoapUIScript.jar::Creating Directory :" + directoryName + "as it does not exist"
-            directory.mkdirs()
-            fileObj = new File( logDir, fileName)
+            directoryObj.mkdirs()
+            fileObj = new File( directoryObj, fileName)
             util.writeProperty("LogFileLocation", directoryName)
         }
-        else if (!directoryObj.isDirectory() && propertyLocation == "Project" && util.readTestCaseProperty("LogFileLocation").toString() == "0")
+        else if (!directoryObj.isDirectory() && propertyLocation == "Project" && (util.readTestCaseProperty("LogFileLocation").toString() == "0" || util.readTestCaseProperty("LogFileLocation").toString() == "-1"))
         {
             SoapUI.log "SoapUIScript.jar::Creating Directory :" + directoryName + "as it does not exist"
             directoryObj.mkdirs()

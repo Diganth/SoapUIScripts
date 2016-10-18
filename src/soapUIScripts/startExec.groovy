@@ -36,48 +36,33 @@ import soapUIScripts.utility
  */
 class startExec {
         
-    def context, util, log, testRunner, evaluator, dbassertor, fsassertor, captureType;
+    def context, util, log, testRunner, evaluator, dbassertor, fsassertor, captureType, propertyName;
     
     startExec(def context, def testRunner, def propertyName){
-        this.context = context
-        this.testRunner = testRunner
-        util = new utility(context, testRunner, propertyName); 
-        log = new logger(util);
-        if (propertyName == "Project"){
-            log.createLogFile("Project");
-            log.createResultFile("Project");
-        }
-        else {
-            log.createLogFile(propertyName);
-            log.createResultFile(propertyName);
-        }
-        
+        initializeClassObjects(context, testRunner, propertyName);
         evaluator = new evalRequests(util, context, log);
         dbassertor = new DBAssertions(util, context, log);
         fsassertor = new FSAssertions(util, context, log);
     }
     
-    
     startExec(def context, def testRunner, def propertyName, def captureType){
-        this.context = context
-        this.testRunner = testRunner
         this.captureType = captureType;
-        util = new utility(context, testRunner, propertyName); 
-        log = new logger(util);
-            if (propertyName == "Project"){
-            log.createLogFile("Project");
-            log.createResultFile("Project");
-        }
-        else {
-            log.createLogFile(propertyName);
-            log.createResultFile(propertyName);
-        }
+        initializeClassObjects(context, testRunner, propertyName);
         evaluator = new evalRequests(util, context, log, captureType);
         dbassertor = new DBAssertions(util, context, log);
         fsassertor = new FSAssertions(util, context, log);
     }
+    
+    void initializeClassObjects(def context, def testRunner, def propertyName){
+        this.context = context
+        this.testRunner = testRunner
+        this.propertyName = propertyName
+        util = new utility(context, testRunner, propertyName); 
+        log = new logger(util);
+        log.createLogFile(propertyName);
+    }
         
-     def startLoop(){
+    def startLoop(){
         def counter, next, size;
         counter = util.readProperty("LoopCount").toString()
         counter = counter.toInteger() 
@@ -125,25 +110,54 @@ class startExec {
     }
     
     //Captures DATASink Data.
-    def captureDataSink (String dataSinkName, String dataType){
+    def captureDataSink (String dataSinkName){
+        log.createResultFile(propertyName, dataSinkName+".csv");
+        String finalData = null;
+        StringBuilder propertyData = new StringBuilder();
+        def dataSinkData = util.dsProperty(dataSinkName, "data");
+        if (dataSinkData != -1)
+        {
+            
+            for (int i = 0; i < dataSinkData.size(); i++){
+                if (util.readTestCaseProperty("Header").toString() != "1"){
+                    propertyData.append(dataSinkData[i].getName());
+                    propertyData.append(',');
+                }
+                else{
+                    propertyData.append(util.contextExpand(dataSinkData[i].getValue()));
+                    propertyData.append(',');
+                }
+            }
+            finalData = propertyData.substring(0,propertyData.length()-1);
+            log.results(finalData);
+            util.writeTestCaseProperty("Header", "1");
+        }
+        else {
+            SoapUI.log "Specified DataSink either does not exist or has no properties defined. Check DataSink: " + dataSinkName; 
+        }
+    }
+    
+    //Captures DATASink Data.
+    def captureDataSinkPipe (String dataSinkName){
+        log.createResultFile(propertyName, dataSinkName+".dat");
         String finalData = null;
         StringBuilder propertyData = new StringBuilder();
         def dataSinkData = util.dsProperty(dataSinkName, "data");
         if (dataSinkData != -1)
         {
             for (int i = 0; i < dataSinkData.size(); i++){
-                if (dataType.toLowerCase() == "header" && util.readTestCaseProperty("Header") != 1){
-                    util.writeTestCaseProperty("Header", "1");
+                if (util.readTestCaseProperty("Header").toString() != "1"){
                     propertyData.append(dataSinkData[i].getName());
-                    propertyData.append(',');
+                    propertyData.append('|');
                 }
-                else if (dataType.toLowerCase() == "content") {
-                    propertyData.append(dataSinkData[i].getValue());
-                    propertyData.append(',');
+                else{
+                    propertyData.append(util.contextExpand(dataSinkData[i].getValue()));
+                    propertyData.append('|');
                 }
             }
             finalData = propertyData.substring(0,propertyData.length()-1);
             log.results(finalData);
+            util.writeTestCaseProperty("Header", "1");
         }
         else {
             SoapUI.log "Specified DataSink either does not exist or has no properties defined. Check DataSink: " + dataSinkName; 

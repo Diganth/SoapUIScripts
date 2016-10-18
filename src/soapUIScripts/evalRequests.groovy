@@ -143,18 +143,14 @@ class evalRequests {
         
         def testStepName = testStep.name
         def grUtils = new GroovyUtils(context);
-        
         def errorData;
         SoapUI.log "In Create Indicium....";
-        
-        requestHolder = grUtils.getXmlHolder(testStep.getProperty("RawRequest").getValue());
-        requestHolder.declareNamespace("ns1", nameSpace);
+        def rawRequest = util.getRawRequest(testStep);
         
         responseHolder = grUtils.getXmlHolder(testStep.getProperty("Response").getValue())
         
-        def imageType = requestHolder.getNodeValue('//ns1:CreateIndicium/ns1:ImageType');
-        def returnImageData = requestHolder.getNodeValue('//ns1:CreateIndicium/ns1:ReturnImageData');
-        
+        def imageType = util.readXMLNodeValue(rawRequest, "//ns1:CreateIndicium/ns1:ImageType");
+        def returnImageData = util.readXMLNodeValue(rawRequest, "//ns1:CreateIndicium/ns1:ReturnImageData");
         def url = responseHolder.getNodeValue('//ns1:CreateIndiciumResponse[1]/ns1:URL[1]')
         def stampsTxID = responseHolder.getNodeValue('//ns1:CreateIndiciumResponse[1]/ns1:StampsTxID[1]')
         def tracking = responseHolder.getNodeValue('//ns1:CreateIndiciumResponse[1]/ns1:TrackingNumber[1]')
@@ -239,7 +235,7 @@ class evalRequests {
         def transactionID = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:TransactionID[1]}')
         def availablePostage = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:PostageBalance[1]/ns1:AvailablePostage[1]}')
         def controlTotal = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:PostageBalance[1]/ns1:ControlTotal[1]}')
-        def rejectionReason = context..expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:RejectionReason[1]}')
+        //def rejectionReason = context..expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:RejectionReason[1]}')
         if (purchaseStatus == "Success"){
             log.info ("Purchase Postage SUCCESS :: Transaction ID " + transactionID + " :: Available Postage " + availablePostage + ":: Control Total " + controlTotal)
         }

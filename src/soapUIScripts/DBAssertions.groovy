@@ -265,6 +265,7 @@ class DBAssertions {
         return assertionResult;
 
     }
+    
     def assertPackageType(def request, def dbData){  
         def assertionResult = null;
         def testCaseName = util.readTestCaseProperty("CurrentTestName");

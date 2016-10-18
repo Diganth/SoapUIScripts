@@ -28,6 +28,10 @@ import com.eviware.soapui.LogMonitor.*
 import com.eviware.soapui.SoapUI
 import groovy.sql.Sql
 import java.text.DecimalFormat
+import javax.xml.parsers.DocumentBuilder
+import javax.xml.parsers.DocumentBuilderFactory
+import org.w3c.dom.Document
+import org.xml.sax.InputSource
 import soapUIScripts.*
 /**
  *
@@ -81,6 +85,33 @@ protected class utility {
     def project(){
         return context.testCase.testSuite.project;
     }
+    //Capture Data from variables
+    def contextExpand(String values){
+        if (values.startsWith("\${") && values.endsWith("}"))
+            return context.expand(values)
+        else
+            return values
+    }
+    //Get RawRequest from TestStep
+    def getRawRequest(def testStep){
+        String rawRequest = null, request = null;
+        int firstIndex = 0, lastIndex = 0;
+        
+        request = testStep.getProperty("RawRequest").getValue();
+        
+        if (request != null && request.toLowerCase().contains("<soapenv:envelope")){
+            firstIndex = request.toLowerCase().indexOf("<soapenv:envelope");
+            lastIndex = request.toLowerCase().indexOf("</soapenv:envelope");
+            rawRequest = request.substring(firstIndex, lastIndex + "</soapenv:envelope>".length());
+            SoapUI.log("SoapUIScript.jar::RawRequest -" + rawRequest);
+        }
+        else{
+            rawRequest = testStep.getProperty("Request").getValue();
+            SoapUI.log("SoapUIScript.jar::RawRequest -" + rawRequest);
+        }
+        
+        return rawRequest;
+    }
     //Returns the Directory name where results and logs of the current testcase are located.
     def dirName(def dirLocation){
         if (dirLocation == "Project")
@@ -99,7 +130,7 @@ protected class utility {
     def readProperty(def property){
         if (this.propertyTestStep().getPropertyValue(property) == null){
             SoapUI.log "SoapUIScript.jar::Check Property Name. Supplied property name does not match " + property;
-            return -1;
+            return "-1";
         }
         else
             return this.propertyTestStep().getPropertyValue(property);
@@ -112,7 +143,7 @@ protected class utility {
     def readTestStepProperty(def testStepName, def property){
         if (this.testStep(testStepName).getPropertyValue(property) == null){
             SoapUI.log "SoapUIScript.jar::Check TestStep Property Name. Supplied property name does not match " + property;
-            return -1;
+            return "-1";
         }
         else
             return this.testStep(testStepName).getPropertyValue(property);
@@ -125,7 +156,7 @@ protected class utility {
     def readTestSuiteProperty(def property){
         if (this.testSuite().getPropertyValue(property) == null){
             SoapUI.log "SoapUIScript.jar::Check TestSuite Property Name. Supplied property name does not match " + property;
-            return -1;
+            return "-1";
         }
         else
             return this.testSuite().getPropertyValue(property);
@@ -138,7 +169,7 @@ protected class utility {
     def readTestCaseProperty(def property){
         if (this.testCase().getPropertyValue(property) == null){
             SoapUI.log "SoapUIScript.jar::Check TestCase Property Name. Supplied property name does not match " + property;
-            return -1;
+            return "-1";
         }
         else
             return this.testCase().getPropertyValue(property);
@@ -151,7 +182,7 @@ protected class utility {
     def readProjectProperty(def property){
         if (this.project().getPropertyValue(property) == null){
             SoapUI.log "SoapUIScript.jar::Check Project Property Name. Supplied property name does not match $property";
-            return -1;
+            return "-1";
         }
         else 
             return this.project().getPropertyValue(property);
@@ -240,8 +271,8 @@ protected class utility {
         }
         else {
             try {
-                SqlInstance.execute(SQLQuery);
-                if (SqlInstance.updateCount == 1){
+                sqlInstance.execute(SQLQuery);
+                if (sqlInstance.updateCount == 1){
                     queryResult = "Success";
                 }
                 closeDB(sqlInstance);
