@@ -6,12 +6,11 @@
             <extension file="groovy-build.xml" id="groovy">
                 <dependency dependsOn="-groovy-init-macrodef-javac" target="-pre-pre-compile"/>
             </extension>
-            <extension file="build-native.xml" id="j2sedeploy"/>
         </buildExtensions>
         <data xmlns="http://www.netbeans.org/ns/j2se-project/3">
             <name>SoapUIScripts</name>
             <source-roots>
-                <root id="src.dir" name="src"/>
+                <root id="src.src.dir"/>
             </source-roots>
             <test-roots/>
         </data>

@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package soapUIScripts
+package soapUIScripts;
 
 import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep
 import com.eviware.soapui.impl.wsdl.teststeps.*
@@ -29,19 +29,24 @@ import com.eviware.soapui.support.XmlHolder
 import com.eviware.soapui.support.GroovyUtils
 import com.eviware.soapui.LogMonitor.*
 import com.eviware.soapui.SoapUI
-import soapUIScripts.*
+import helperScripts.*
+
 /**
  *
  * @author Diganth Aswath <diganth2004@gmail.com>
- * @description This class contains code that parses executed requests and 
- *              extracts data, logs them, prints URLs. if adding new webmethods to test,
- *              only this class needs to be changed.
+ * @Description Internal Code.
  */
-class evalRequests {
-    def context, util, log;
-    def captureURL, captureImageData, responseHolder, requestHolder, captureResponses, captureType = "null";
 
-    evalRequests(def util, def context, def log){
+/*
+ * This class contains code that parses executed requests and 
+ * extracts data, logs them, prints URLs. if adding new webmethods to test,
+ * only this class needs to be changed. 
+*/
+public class evalRequests {
+    private def context, util, log;
+    private def captureURL, captureImageData, responseHolder, requestHolder, captureResponses, captureType = "null";
+
+    private evalRequests(def util, def context, def log){
         this.util = util
         this.context = context
         this.log = log
@@ -50,7 +55,7 @@ class evalRequests {
         captureResponses = new captureResponses (util, log)
     }
     
-    evalRequests(def util, def context, def log, def captureType){
+    private evalRequests(def util, def context, def log, def captureType){
         this.util = util
         this.context = context
         this.log = log
@@ -60,7 +65,7 @@ class evalRequests {
         captureResponses = new captureResponses (util, log)
     }
     
-    String testCaseIterator(){
+    private String testCaseIterator(){
         def testSteps = util.testStepsList();
         def appType;
         String[] nameSpaceURL = null;
@@ -77,7 +82,7 @@ class evalRequests {
                              
                 // Reading Raw request to extract Namespace to use.
                 if ((rawRequest != null) && !(util.isFaultString(response))){
-                   nameSpaceURL = rawRequest.findAll('https?://[^\\s<>"]+|www\\.[^\\s<>"]+')
+                    nameSpaceURL = rawRequest.findAll('https?://[^\\s<>"]+|www\\.[^\\s<>"]+')
                          
                     if (rawRequest.contains("CreateIndicium")){
                         error = createIndicium(it,nameSpaceURL[1])
@@ -114,18 +119,18 @@ class evalRequests {
                         log.info(it.name + ":: Response returned -- " + error)
                     }
                     else if (rawRequest.contains("GetRates") || rawRequest.contains("GetCodewordQuestions") || rawRequest.contains("EnumCostCodes") 
-                            || rawRequest.contains("GetPurchasePostage") ){
+                        || rawRequest.contains("GetPurchasePostage") ){
                         error = miscellaneousWebMethods(it, nameSpaceURL[1])
                         log.info(it.name + ":: Response returned -- " + error)
                     }
                     else if (rawRequest.contains("RegisterUser") || rawRequest.contains("RegisterUserAndWait") || rawRequest.contains("ClearMessages")
-                            || rawRequest.contains("AuthenticatePostalUser") || rawRequest.contains("GetCustomerInfo") 
-                            || rawRequest.contains("GetBillingInfo") || rawRequest.contains("PurchasePostage") || rawRequest.contains("EnumPurchaseLog")
-                            || rawRequest.contains("IssuePostage") || rawRequest.contains("IssueShippingLabel") || rawRequest.contains("AcceptInsuranceEULA")
-                            || rawRequest.contains("PurchaseInsurance") || rawRequest.contains("RefundInsurance") || rawRequest.contains("AddReferenceCodes")
-                            || rawRequest.contains("EnumReferenceCodes") || rawRequest.contains("CleanseAddress")){
-                            error = miscellaneousWebMethods(it, nameSpaceURL[1])
-                            log.info(it.name + ":: Response returned -- " + error)
+                        || rawRequest.contains("AuthenticatePostalUser") || rawRequest.contains("GetCustomerInfo") 
+                        || rawRequest.contains("GetBillingInfo") || rawRequest.contains("PurchasePostage") || rawRequest.contains("EnumPurchaseLog")
+                        || rawRequest.contains("IssuePostage") || rawRequest.contains("IssueShippingLabel") || rawRequest.contains("AcceptInsuranceEULA")
+                        || rawRequest.contains("PurchaseInsurance") || rawRequest.contains("RefundInsurance") || rawRequest.contains("AddReferenceCodes")
+                        || rawRequest.contains("EnumReferenceCodes") || rawRequest.contains("CleanseAddress")){
+                        error = miscellaneousWebMethods(it, nameSpaceURL[1])
+                        log.info(it.name + ":: Response returned -- " + error)
                     }
                     else{
                         error = "Unable to find any valid acceptable types in request.";
@@ -139,7 +144,7 @@ class evalRequests {
         }
         return error;
     }
-    String createIndicium(def testStep, String nameSpace){
+    private String createIndicium(def testStep, String nameSpace){
         
         def testStepName = testStep.name
         def grUtils = new GroovyUtils(context);
@@ -181,11 +186,11 @@ class evalRequests {
             errorData = captureImageData.base64decoder(base64Data, testStepName, serviceType, layout, imageType);    
         }
         else if (captureType.toString().toLowerCase() == "null" || captureType.toString().toLowerCase() == "url")
-            errorData = captureURL.printURL(url, testStepName, serviceType, layout);
+        errorData = captureURL.printURL(url, testStepName, serviceType, layout);
         
         return errorData;
     }
-    String createScanForm(def testStep, String nameSpace){
+    private String createScanForm(def testStep, String nameSpace){
         
         def testStepName = testStep.name
         def grUtils = new GroovyUtils(context);
@@ -199,7 +204,7 @@ class evalRequests {
         log.info(testStepName + ":: Response -- ScanFormID : " + scanFormID)
         log.info(testStepName + ":: Response -- ScanForm URL : " + url)
 
-       /* log.debug(testStepName + ":: *********** Response **************** :")
+        /* log.debug(testStepName + ":: *********** Response **************** :")
         log.debug(testStepName + ":: " + responseHolder.getPrettyXml())*/
         
         if (captureType.toString().toLowerCase() == "response"){
@@ -212,7 +217,7 @@ class evalRequests {
         return errorData;
          
     }
-    String registration(def testStepName, String nameSpace){
+    private String registration(def testStepName, String nameSpace){
         
         def userName = context.expand('${'+testStepName+'#Request#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccount[1]/ns1:UserName[1]}')
         def userID = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:RegisterAccountResponse[1]/ns1:UserId[1]}')
@@ -229,7 +234,7 @@ class evalRequests {
         
         return "NULL";
     }
-    String purchasePostage(def testStepName, String nameSpace){
+    private String purchasePostage(def testStepName, String nameSpace){
         
         def purchaseStatus = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:PurchaseStatus[1]}')
         def transactionID = context.expand('${'+testStepName+'#Response#declare namespace ns1=\''+nameSpace+'\';//ns1:PurchasePostageResponse[1]/ns1:TransactionID[1]}')
@@ -248,7 +253,7 @@ class evalRequests {
         
         return "NULL";
     }        
-    String getAccountInfo(def testStep, String nameSpace){
+    private String getAccountInfo(def testStep, String nameSpace){
         
         def testStepName = testStep.name
         def grUtils = new GroovyUtils(context);
@@ -275,7 +280,7 @@ class evalRequests {
         }
         return errorData;
     }
-    String  createUnfundedIndicium( def testStep, String nameSpace){
+    private String createUnfundedIndicium( def testStep, String nameSpace){
         
         def testStepName = testStep.name
         def grUtils = new GroovyUtils(context);
@@ -298,7 +303,7 @@ class evalRequests {
       
         return errorData;
     }
-    String createNetStampsIndicia(def testStep, String nameSpace){
+    private String createNetStampsIndicia(def testStep, String nameSpace){
         
         def grUtils = new GroovyUtils(context);
         def errorData;
@@ -328,7 +333,7 @@ class evalRequests {
         }
         return errorData;
     }  
-    String createEnvelopeIndicium(def testStep, String nameSpace){
+    private String createEnvelopeIndicium(def testStep, String nameSpace){
         
         def grUtils = new GroovyUtils(context);
         def errorData;
@@ -359,7 +364,7 @@ class evalRequests {
         }
         return errorData;
     } 
-    String createMailingLabelIndicia(def testStep, String nameSpace){
+    private String createMailingLabelIndicia(def testStep, String nameSpace){
         
         def grUtils = new GroovyUtils(context);
         def errorData;
@@ -390,7 +395,7 @@ class evalRequests {
         }
         return errorData;
     }   
-    String miscellaneousWebMethods (def testStep, String nameSpace){
+    private String miscellaneousWebMethods (def testStep, String nameSpace){
         
         def grUtils = new GroovyUtils(context);
         def errorData;

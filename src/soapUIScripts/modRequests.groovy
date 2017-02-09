@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package soapUIScripts
+package soapUIScripts;
 
 import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep
 import com.eviware.soapui.impl.wsdl.teststeps.*
@@ -26,20 +26,20 @@ import com.eviware.soapui.model.support.ModelSupport
 import com.eviware.soapui.support.UISupport
 import com.eviware.soapui.LogMonitor.*
 import com.eviware.soapui.SoapUI
-import soapUIScripts.*
 /**
  *
  * @author Diganth Aswath <diganth2004@gmail.com>
  */
-class modRequests {
-    def context, util, log;
-    modRequests(def util, def context, def log){
+protected class modRequests {
+    
+    private def context, util, log;
+    private modRequests(def util, def context, def log){
         this.util = util
         this.context = context
         this.log = log
     }
         
-    def testCaseIterator(){
+    private def testCaseIterator(){
         def testSteps = util.testStepsList();
         testSteps.each {
             // Checking if TestStep is of WSDLTestRequest type
@@ -69,23 +69,23 @@ class modRequests {
         }
     }
     
-    def createIndicium(def testStepName, String nameSpace){
+    private def createIndicium(def testStepName, String nameSpace){
         
     }
 
-    def registration(def testStepName, String nameSpace){
+    private def registration(def testStepName, String nameSpace){
         
-}
+    }
 
-    def purchasePostage(def testStepName, String nameSpace){
+    private def purchasePostage(def testStepName, String nameSpace){
         
     }
     
-    def getAccountInfo(def testStepName, String nameSpace){
+    private def getAccountInfo(def testStepName, String nameSpace){
         
     }
     
-    def createUnfundedIndicium(def testStepName, String nameSpace){
+    private def createUnfundedIndicium(def testStepName, String nameSpace){
         
     }
 

@@ -15,8 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
-package soapUIScripts
+package soapUIScripts;
 
 import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunContext
 import com.eviware.soapui.model.project.ProjectFactoryRegistry
@@ -24,71 +23,70 @@ import com.eviware.soapui.model.support.ModelSupport
 import com.eviware.soapui.support.UISupport
 import com.eviware.soapui.LogMonitor.*
 import com.eviware.soapui.SoapUI
-import soapUIScripts.*
 import org.apache.commons.codec.binary.Base64
 
 /**
  *
  * @author Diganth Aswath <diganth2004@gmail.com>
  */
-class captureImageData {
+public class captureImageData {
     
-    def util, log, testStepName, serviceType, layout, imageType;
-    String[] imageData;
+    private def util, log, testStepName, serviceType, layout, imageType;
+    private String[] imageData;
     
-    captureImageData(utility util, logger log){
+    private captureImageData(def util, def log){
         this.util = util;
         this.log = log;
     }
     
-    def file_create (String decodedImageData, imagetype){
-       def fileName, logFileLocation;
-       def propertyLocation = util.propName;
-       if (propertyLocation != 'Project'){
-           logFileLocation = util.readProperty("LogFileLocation");
-       }
-       else{
-           logFileLocation = util.readTestCaseProperty("LogFileLocation");
-       }
-       if (serviceType == null)
-            fileName = logFileLocation+testStepName+"_"+layout+imagetype;
+    private def file_create (String decodedImageData, imagetype){
+        def fileName, logFileLocation;
+        def propertyLocation = util.propName;
+        if (propertyLocation != 'Project'){
+            logFileLocation = util.readProperty("LogFileLocation");
+        }
+        else{
+            logFileLocation = util.readTestCaseProperty("LogFileLocation");
+        }
+        if (serviceType == null)
+        fileName = logFileLocation+testStepName+"_"+layout+imagetype;
         else if (serviceType == null && layout == null)
-            fileName = logFileLocation+testStepName+"_"+util.todayTime()+imagetype;
+        fileName = logFileLocation+testStepName+"_"+util.todayTime()+imagetype;
         else if (layout == null)
-            fileName = logFileLocation+testStepName+"_"+serviceType+imagetype;
+        fileName = logFileLocation+testStepName+"_"+serviceType+imagetype;
         else
-            fileName = logFileLocation+testStepName+imagetype;
+        fileName = logFileLocation+testStepName+imagetype;
        
-       log.debug("File Name :: " +fileName)
-       //Write output to file created
-       writetoFile (fileName, decodedImageData)
+        log.debug("File Name :: " +fileName)
+        //Write output to file created
+        writetoFile (fileName, decodedImageData)
     }
     
-    def file_create2 (byte[] decodedImageData, imagetype){
-       def fileName, logFileLocation;
-       def propertyLocation = util.propName;
-       if (propertyLocation != 'Project'){
-           logFileLocation = util.readProperty("LogFileLocation");
-       }
-       else{
-           logFileLocation = util.readTestCaseProperty("LogFileLocation");
-       }
-       if (serviceType == null)
-            fileName = logFileLocation+testStepName+"_"+layout+imagetype;
+    private def file_create2 (byte[] decodedImageData, imagetype){
+        def fileName, logFileLocation;
+        def propertyLocation = util.propName;
+        if (propertyLocation != 'Project'){
+            logFileLocation = util.readProperty("LogFileLocation");
+        }
+        else{
+            logFileLocation = util.readTestCaseProperty("LogFileLocation");
+        }
+        if (serviceType == null)
+        fileName = logFileLocation+testStepName+"_"+layout+imagetype;
         else if (serviceType == null && layout == null)
-            fileName = logFileLocation+testStepName+"_"+util.todayTime()+imagetype;
+        fileName = logFileLocation+testStepName+"_"+util.todayTime()+imagetype;
         else if (layout == null)
-            fileName = logFileLocation+testStepName+"_"+serviceType+imagetype;
+        fileName = logFileLocation+testStepName+"_"+serviceType+imagetype;
         else
-            fileName = logFileLocation+testStepName+imagetype;
+        fileName = logFileLocation+testStepName+imagetype;
        
-       log.debug("File Name :: " +fileName)
-       //Write output to file created
-       writetoFile2 (fileName, decodedImageData)
+        log.debug("File Name :: " +fileName)
+        //Write output to file created
+        writetoFile2 (fileName, decodedImageData)
     }
 	
     // Function to write decoded imageData to the file/
-    def writetoFile (fileName, String decodedImageData){
+    private def writetoFile (fileName, String decodedImageData){
         def ImgDatafilestream;
         try{
             ImgDatafilestream = new FileOutputStream(fileName)
@@ -99,7 +97,7 @@ class captureImageData {
         ImgDatafilestream.close();
     }
     
-    def writetoFile2 (fileName, byte[] decodedImageData){
+    private def writetoFile2 (fileName, byte[] decodedImageData){
         def ImgDatafilestream;
         try{
             ImgDatafilestream = new FileOutputStream(fileName)
@@ -110,17 +108,17 @@ class captureImageData {
         ImgDatafilestream.close();
     }
     
-   // Function to decode base64 encoded data.
-   public String base64decoder (String[] imageData, def testStepName, def serviceType, def layout, def imageType){
-       //log.debug("Image Data :: " +imageData)
-       String errorFlag = null;
-       //this.imageData = imageData;
-       this.testStepName = testStepName;
-       this.serviceType = serviceType;
-       this.layout = layout;
-       this.imageType = imageType;
-       log.debug("In the base64 decoder function -> "+ testStepName)
-       for (int i = 0; i < imageData.length; i++){
+    // Function to decode base64 encoded data.
+    private String base64decoder (String[] imageData, def testStepName, def serviceType, def layout, def imageType){
+        //log.debug("Image Data :: " +imageData)
+        String errorFlag = null;
+        //this.imageData = imageData;
+        this.testStepName = testStepName;
+        this.serviceType = serviceType;
+        this.layout = layout;
+        this.imageType = imageType;
+        log.debug("In the base64 decoder function -> "+ testStepName)
+        for (int i = 0; i < imageData.length; i++){
             if (imageData[i]?.trim()){
                 Base64 b64 = new Base64();
                 byte[] decoded = b64.decodeBase64(imageData[i].getBytes())
@@ -183,7 +181,7 @@ class captureImageData {
                 errorFlag = "Unable to capture ReturnImageData label for -> "+ testStepName;
             }
         }
-       return errorFlag;
-   }
+        return errorFlag;
+    }
 }
 

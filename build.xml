@@ -7,8 +7,8 @@
 <!-- the Compile on Save feature is turned off for the project. -->
 <!-- You can turn off the Compile on Save (or Deploy on Save) setting -->
 <!-- in the project's Project Properties dialog box.-->
-<project name="RegressionResults" default="default" basedir=".">
-    <description>Builds, tests, and runs the project SoapUIScripts.</description>
+<project name="SoapUIScripts" default="default" basedir=".">
+    <description>Builds the project SoapUIScripts.</description>
     <import file="nbproject/build-impl.xml"/>
     <!--
 
@@ -70,39 +70,40 @@
     nbproject/build-impl.xml file. 
 
     -->
+    <!--<taskdef name="groovydoc" classpath="${javac.classpath}" classname="org.codehaus.groovy.ant.Groovydoc">
+    </taskdef>-->
+    <!--<target name="generategroovydoc" description="Generate Groovydoc-based documentation">  
+        <mkdir dir="${groovydoc.dir}" />  
+        <groovydoc destdir="${groovydoc.dir}"  
+                sourcepath="."  
+                packagenames="**.*"  
+                use="true"  
+                windowtitle="SoapUI Scripts Documentation"  
+                header="SoapUI"  
+                footer="Logging in Groovy 1.8"  overview="override.html"  
+                private="false">  
+            <link packages="java.,org.xml.,javax.,org.xml." href="http://download.oracle.com/javase/6/docs/api"/>  
+            <link packages="groovy.,org.codehaus.groovy."   href="http://groovy.codehaus.org/api/"/>  
+        </groovydoc>  
+    </target> -->
     <target name="-pre-init">
-   <property name="project.name" value="SoapUIScripts" />
-   <property name="version.num" value="0.3" />
-   <property name="user.name" value="Diganth Aswath"/>
-   <tstamp>
-      <format property="NOW" pattern="yyyy-MM-dd HH:mm:ss z" />
-   </tstamp>
+        <echo>Creating Manifest</echo>
+        <buildnumber file="Version"/>
+        <property name="project.name" value="SoapUIScripts" />
+        <property name="user.name" value="Diganth Aswath"/>
+        <tstamp>
+            <format property="NOW" pattern="yyyy-MM-dd HH:mm:ss z" />
+        </tstamp> 
+        <manifest file="MANIFEST.MF">
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Bundle-Name" value="${project.name}" />           
+            <attribute name="Bundle-Version" value="1.${build.number}" />
+            <attribute name="Bundle-Date" value="${NOW}" />
+            <!--<attribute name="Bundle-Revision" value="${svna.version}" />-->
+            <attribute name="Implementation-Title" value="${project.name}" />
+            <attribute name="Implementation-Version" value="1.${build.number}" />
+            <!--<attribute name="Implementation-URL" value="http://www.example.com" />-->
+        </manifest>
  
-   <!--
-   <exec outputproperty="svna.version" executable="svnversion">
-       <arg value="-c" />
-       <redirector>
-           <outputfilterchain>
-               <tokenfilter>
-                   <replaceregex pattern="^[0-9]*:?" replace="" flags="g"/>
-                   <replaceregex pattern="M" replace="" flags="g"/>
-               </tokenfilter>
-           </outputfilterchain>
-       </redirector>
-   </exec>
-   -->
- 
- 
-   <manifest file="MANIFEST.MF">
-      <attribute name="Built-By" value="${user.name}"/>
-      <attribute name="Bundle-Name" value="${project.name}" />           
-      <attribute name="Bundle-Version" value="${version.num}" />
-      <attribute name="Bundle-Date" value="${NOW}" />
-      <!--<attribute name="Bundle-Revision" value="${svna.version}" />-->
-      <attribute name="Implementation-Title" value="${project.name}" />
-      <attribute name="Implementation-Version" value="${version.num}" />
-      <!--<attribute name="Implementation-URL" value="http://www.example.com" />-->
-   </manifest>
- 
-</target>
+    </target>
 </project>

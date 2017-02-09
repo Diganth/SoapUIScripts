@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package soapUIScripts
+package soapUIScripts;
 
 import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunContext
 import com.eviware.soapui.model.project.ProjectFactoryRegistry
@@ -24,26 +24,25 @@ import com.eviware.soapui.support.UISupport
 import javax.net.ssl.SSLHandshakeException
 import com.eviware.soapui.LogMonitor.*
 import com.eviware.soapui.SoapUI
-import soapUIScripts.*
 
 /**
  *
  * @author Diganth Aswath <diganth2004@gmail.com>
  */
-class captureURL {
+public class captureURL {
 	
-    def util, log, url, modded_url, testStepName, serviceType, layout;
-    captureURL(utility util, logger log){
+    private def util, log, url, modded_url, testStepName, serviceType, layout;
+    private captureURL(def util, def log){
         SoapUI.log("SoapUIScript.jar::In constructor of captureURL");
         this.util = util;
         this.log  = log;
     }
-    def modURLString(url){
+    private def modURLString(url){
         url.replaceFirst(/^https/, "http")
     }
 	
     //Function to create file with TestStep name depending on imagetype
-    def file_create (imageType, url){
+    private def file_create (imageType, url){
         def fileName, logFileLocation;
         def propertyLocation = util.propName;
         if (propertyLocation != 'Project'){
@@ -65,7 +64,7 @@ class captureURL {
     }
         
     // Function to write responseURL to the file.
-    def writetoFile (fileName,  url){
+    private def writetoFile (fileName,  url){
         //def file = new File(fileName)
         //file.write(url, "UTF-8") //Writing response into the file created
         def URLimgfile = new FileOutputStream(fileName)
@@ -91,7 +90,7 @@ class captureURL {
 	
     // Function that controls the logic of iterating through the testSteps to obtain
     // URL from the response.
-    public String printURL (def url, def testStepName, def serviceType, def layout) {
+    private String printURL (def url, def testStepName, def serviceType, def layout) {
         
         SoapUI.log "In CaptureURL.PrintURL"
         String errorFlag = null;
@@ -119,32 +118,32 @@ class captureURL {
                 else if (urlSplit[i].contains(".png")){
                     file_create ("_" +i+ ".png", urlSplit[i])
                     log.info("Captured label for ->" + testStepName);
-                      errorFlag ="No Error";
+                    errorFlag ="No Error";
                 }
                 else if (urlSplit[i].contains(".jpg")){
                     file_create ("_" +i+ ".jpg", urlSplit[i])
                     log.info("Captured label for ->" + testStepName);
-                      errorFlag ="No Error";
+                    errorFlag ="No Error";
                 }
                 else if (urlSplit[i].contains(".zpl")){
                     file_create ("_" +i+ ".zpl", urlSplit[i])
-                     log.info("Captured label for ->" + testStepName);
-                      errorFlag ="No Error";
+                    log.info("Captured label for ->" + testStepName);
+                    errorFlag ="No Error";
                 }
                 else if (urlSplit[i].contains(".azpl")){
                     file_create ("_" +i+ ".azpl", urlSplit[i])
                     log.info("Captured label for ->" + testStepName);
-                     errorFlag ="No Error";
+                    errorFlag ="No Error";
                 }
                 else if (urlSplit[i].contains(".bzpl")){
                     file_create ("_" +i+ ".bzpl", urlSplit[i])
                     log.info("Captured label for ->" + testStepName);
-                     errorFlag ="No Error";
+                    errorFlag ="No Error";
                 }
                 else if (urlSplit[i].contains("epl")){
                     file_create ("_" +i+ ".epl", urlSplit[i])
                     log.info("Captured label for ->" + testStepName);
-                     errorFlag ="No Error";
+                    errorFlag ="No Error";
                 }
                 else{
                     log.info("Unable to capture label for -> "+ testStepName +" as it doesnot match supported formats.");

@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package soapUIScripts
+package soapUIScripts;
 
 import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunContext
 import com.eviware.soapui.model.project.ProjectFactoryRegistry
@@ -25,22 +25,21 @@ import com.eviware.soapui.support.UISupport
 import javax.net.ssl.SSLHandshakeException
 import com.eviware.soapui.LogMonitor.*
 import com.eviware.soapui.SoapUI
-import soapUIScripts.*
 
 /**
  *
  * @author Diganth Aswath <diganth2004@gmail.com>
  */
-class captureResponses {
-    def util, log, testStepName, serviceType, layout, response;
-    captureResponses(utility util, logger log){
+public class captureResponses {
+    private def util, log, testStepName, serviceType, layout, response;
+    private captureResponses(def util, def log){
         SoapUI.log("SoapUIScript.jar::In constructor of captureResponses");
         this.util = util;
         this.log  = log;
     }
     
     //Function to create file with TestStep name depending on imagetype
-    def file_create (response){
+    private def file_create (response){
         def fileName, logFileLocation;
         def propertyLocation = util.propName;
         if (propertyLocation != 'Project'){
@@ -50,19 +49,19 @@ class captureResponses {
             logFileLocation = util.readTestCaseProperty("LogFileLocation");
         }
         if (serviceType == null)
-            fileName = logFileLocation+testStepName+"_"+layout+".txt";
+        fileName = logFileLocation+testStepName+"_"+layout+".txt";
         else if (serviceType == null && layout == null)
-            fileName = logFileLocation+testStepName+"_"+util.todayTime()+".txt";
+        fileName = logFileLocation+testStepName+"_"+util.todayTime()+".txt";
         else if (layout == null)
-            fileName = logFileLocation+testStepName+"_"+serviceType+".txt";
+        fileName = logFileLocation+testStepName+"_"+serviceType+".txt";
         else
-            fileName = logFileLocation+testStepName+".txt";
+        fileName = logFileLocation+testStepName+".txt";
         // Write output to file created
         writetoFile (fileName, response)
     }
     
     // Function to write response to the file.
-    def writetoFile (fileName,  response){
+    private def writetoFile (fileName,  response){
         def ResponseFile = new FileOutputStream(fileName)
         def out = new BufferedOutputStream(ResponseFile)
         log.info ("Writing response to file.");
@@ -70,7 +69,7 @@ class captureResponses {
         out.close()
     }
     
-    public String saveResponse (def response, def testStepName, def serviceType, def layout) {
+    private String saveResponse (def response, def testStepName, def serviceType, def layout) {
         
         log.info("In SaveResponse() for ->" + testStepName);
         String errorFlag = null;
@@ -86,7 +85,7 @@ class captureResponses {
             return errorFlag;
         }
         else{
-             log.error("Unable to capture response for ->"+ testStepName);
+            log.error("Unable to capture response for ->"+ testStepName);
             return "Unable to capture response for ->"+ testStepName;
         }
     }

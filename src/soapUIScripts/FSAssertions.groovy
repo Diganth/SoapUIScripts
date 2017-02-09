@@ -15,26 +15,34 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+package soapUIScripts;
 
-package soapUIScripts
+import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep
+import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunContext
+import com.eviware.soapui.model.project.ProjectFactoryRegistry
+import com.eviware.soapui.model.support.ModelSupport
+import com.eviware.soapui.support.UISupport
+import com.eviware.soapui.LogMonitor.*
+import com.eviware.soapui.SoapUI
+import groovy.sql.Sql
 
 /**
  *
  * @author Diganth Aswath <diganth2004@gmail.com>
  */
-class FSAssertions {
+public class FSAssertions {
 	
-    def context, testRunner, messageExchange;
-    def util, grUtils, log;
+    private def context, testRunner, messageExchange;
+    private def util, grUtils, log;
     
-    FSAssertions(def util, def context, def log){
+    private FSAssertions(def util, def context, def log){
         this.context = context;
         this.testRunner = testRunner;
         this.log = log;
         this.util = util;    
     }
         
-    FSAssertions(def util, def context, def messageExchange, def log){
+    private FSAssertions(def util, def context, def messageExchange, def log){
         this.util = util;
         this.context = context;
         this.messageExchange = messageExchange;
@@ -42,6 +50,20 @@ class FSAssertions {
         this.log = log;
     } 
     
+    /**
+     * This is used to validate the faultstring from the Soap response against expected faultstring defined in the DataSource.
+     * @param   response Soap response as a string.
+     * @param   dsData Expected faultstring stored in the datasource as a string.
+     * @return  Status of validation as a string. Following are the possible return statuses:
+     *          <ul>
+     *          <li>Matches. Response FS = DataSource FS.
+     *          <li>Mismatch. Request FS does not match DS FS.
+     *          <li>Mismatch. FS not expected.
+     *          <li>Mismatch. FS expected but got none. Expected FS - ...
+     *          <li>Match. No faultstring.
+     *          <li>Fail. Response data missing
+     *          </ul>
+    */
     def assertFaultString(def response, def dsData){
         def assertionResult = null;
         def testCaseName = util.readTestCaseProperty("CurrentTestName");
@@ -75,7 +97,7 @@ class FSAssertions {
         return assertionResult;
     }
     
-    def assertGetUSPSRates(def request, def response, def dataSource){
+    private def assertGetUSPSRates(def request, def response, def dataSource){
         
     }
 }
